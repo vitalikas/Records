@@ -1,10 +1,10 @@
 <resources>
-    <string name="app_name">EchoJournal</string>
+    <string name="app_name">Records</string>
     <string name="widget_title">New Entry Widget</string>
     <string name="widget_description">Create a new journal entry</string>
-    <string name="title_echos">Your EchoJournal</string>
-    <string name="desc_echos_empty">Start recording your first Echo</string>
-    <string name="title_echos_empty">No Entries</string>
+    <string name="title_echos">Your RECORDS</string>
+    <string name="desc_records_empty">Start recording your first Record</string>
+    <string name="title_records_empty">No Entries</string>
     <string name="add_new_entry">Add new entry</string>
     <string name="settings">Settings</string>
     <string name="confused_and_happy_mood_faces">Confused and happy mood faces</string>
