@@ -37,10 +37,11 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 @Composable
 fun <T : Any> SelectableDropDownOptionsMenu(
     items: List<SelectableItem<T>>,
+    itemDisplayText: (T) -> String,
     onDismiss: () -> Unit,
     onItemClick: (SelectableItem<T>) -> Unit,
     modifier: Modifier = Modifier,
-    leadingIcon: (@Composable () -> Unit)? = null,
+    leadingIcon: (@Composable (SelectableItem<T>) -> Unit)? = null,
     dropDownOffset: IntOffset = IntOffset.Zero,
     maxDropDownHeight: Dp = Dp.Unspecified,
     dropDownExtras: SelectableOptionExtras? = null
@@ -92,14 +93,12 @@ fun <T : Any> SelectableDropDownOptionsMenu(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        leadingIcon?.invoke()
+                        leadingIcon?.invoke(selectableItem)
 
-                        selectableItem.displayText?.let {
-                            Text(
-                                text = it,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                        Text(
+                            text = itemDisplayText(selectableItem.item),
+                            modifier = Modifier.weight(1f)
+                        )
 
                         if (selectableItem.selected) {
                             Icon(
@@ -155,20 +154,18 @@ private fun SelectableDropDownOptionsMenuPreview_() {
             items = listOf(
                 SelectableItem(
                     "Hello world 1",
-                    selected = false,
-                    displayText = "Hello world 1"
+                    selected = false
                 ),
                 SelectableItem(
                     "Hello world 2",
-                    selected = true,
-                    displayText = "Hello world 2"
+                    selected = true
                 ),
                 SelectableItem(
                     "Hello world 3",
-                    selected = true,
-                    displayText = "Hello world 3"
+                    selected = true
                 )
             ),
+            itemDisplayText = { it },
             onDismiss = {},
             onItemClick = {},
             leadingIcon = {

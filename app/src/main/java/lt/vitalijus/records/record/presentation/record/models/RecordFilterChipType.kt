@@ -1,5 +1,5 @@
 package lt.vitalijus.records.record.presentation.record.models
 
-enum class RecordFilterChip {
+enum class RecordFilterChipType {
     MOOD, TOPIC
 }

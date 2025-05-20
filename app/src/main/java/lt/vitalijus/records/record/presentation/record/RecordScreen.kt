@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.bgGradient
+import lt.vitalijus.records.record.presentation.record.components.RecordFilterRow
 import lt.vitalijus.records.record.presentation.record.components.RecordFloatingActionButton
 import lt.vitalijus.records.record.presentation.record.components.RecordsEmptyBackground
 import lt.vitalijus.records.record.presentation.record.components.RecordsTopBar
@@ -62,6 +63,19 @@ fun RecordScreen(
                 )
                 .padding(innerPadding)
         ) {
+            RecordFilterRow(
+                moodChipContent = state.moodChipContent,
+                hasActiveMoodFilters = state.hasActiveMoodFilters,
+                selectedFilterChipType = state.selectedFilterChipType,
+                moods = state.moods,
+                topicChipTitle = state.topicChipTitle,
+                hasActiveTopicFilters = state.hasActiveTopicFilters,
+                topics = state.topics,
+                onAction = onAction,
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+            
             when {
                 state.isLoadingData -> {
                     CircularProgressIndicator(
