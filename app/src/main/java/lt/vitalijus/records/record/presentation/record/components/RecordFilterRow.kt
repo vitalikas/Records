@@ -28,21 +28,15 @@ import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.chips.MultiChoiceChip
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableDropDownOptionsMenu
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
-import lt.vitalijus.records.core.presentation.util.UiText
-import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.record.RecordAction
-import lt.vitalijus.records.record.presentation.record.models.MoodChipContent
+import lt.vitalijus.records.record.presentation.record.models.FilterChip
+import lt.vitalijus.records.record.presentation.record.models.FilterItem
 import lt.vitalijus.records.record.presentation.record.models.RecordFilterChipType
 
 @Composable
 fun RecordFilterRow(
-    moodChipContent: MoodChipContent,
-    hasActiveMoodFilters: Boolean,
-    selectedFilterChipType: RecordFilterChipType?,
-    moods: List<SelectableItem<MoodUi>>,
-    topicChipTitle: UiText,
-    hasActiveTopicFilters: Boolean,
-    topics: List<SelectableItem<String>>,
+    moodFilterChip: FilterChip.MoodFilterChip,
+    topicFilterChip: FilterChip.TopicFilterChip,
     onAction: (RecordAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -66,21 +60,18 @@ fun RecordFilterRow(
         verticalArrangement = Arrangement.Center,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        // Mood filter chip
         MultiChoiceChip(
-            displayText = moodChipContent.title.asString(),
-            onClick = {
-                onAction(RecordAction.OnMoodChipClick)
-            },
             leadingContent = {
-                if (moodChipContent.iconsRes.isNotEmpty()) {
+                if (moodFilterChip.content.iconsRes.isNotEmpty()) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy((-4).dp),
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
-                        moodChipContent.iconsRes.forEach { iconRes ->
+                        moodFilterChip.content.iconsRes.forEach { iconRes ->
                             Image(
                                 imageVector = ImageVector.vectorResource(iconRes),
-                                contentDescription = moodChipContent.title.asString(),
+                                contentDescription = moodFilterChip.content.title.asString(),
                                 modifier = Modifier
                                     .height(16.dp)
                             )
@@ -88,22 +79,27 @@ fun RecordFilterRow(
                     }
                 }
             },
-            isClearVisible = hasActiveMoodFilters,
+            displayText = moodFilterChip.content.title.asString(),
+            onClick = {
+                onAction(RecordAction.OnFilterChipClick(chipType = RecordFilterChipType.MOOD))
+            },
+            isClearButtonVisible = moodFilterChip.hasActiveFilters,
             onClearButtonClick = {
                 onAction(RecordAction.OnRemoveFilters(filterType = RecordFilterChipType.MOOD))
             },
-            isDropDownVisible = selectedFilterChipType == RecordFilterChipType.MOOD,
+            isHighlighted = moodFilterChip.hasActiveFilters,
+            isDropDownVisible = moodFilterChip.isDropDownVisible,
             dropDownMenu = {
                 SelectableDropDownOptionsMenu(
-                    items = moods,
+                    items = moodFilterChip.selectableItems,
                     itemDisplayText = { moodUi ->
                         moodUi.title.asString(context = context)
                     },
                     onDismiss = {
-                        onAction(RecordAction.OnDismissMoodDropDown)
+                        onAction(RecordAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.MOOD))
                     },
                     onItemClick = { moodUi ->
-                        onAction(RecordAction.OnFilterByMoodClick(moodUi = moodUi.item))
+                        onAction(RecordAction.OnFilterByItem(filterItem = FilterItem.MoodItem(moodUi = moodUi.item)))
                     },
                     dropDownOffset = dropDownOffset,
                     maxDropDownHeight = maxDropDownHeight,
@@ -114,22 +110,23 @@ fun RecordFilterRow(
                         )
                     }
                 )
-            },
-            isHighlighted = hasActiveMoodFilters || selectedFilterChipType == RecordFilterChipType.MOOD
+            }
         )
 
+        // Topic filter chip
         MultiChoiceChip(
-            displayText = topicChipTitle.asString(),
+            displayText = topicFilterChip.content.text.asString(),
             onClick = {
-                onAction(RecordAction.OnTopicChipClick)
+                onAction(RecordAction.OnFilterChipClick(chipType = RecordFilterChipType.TOPIC))
             },
-            isClearVisible = hasActiveTopicFilters,
+            isClearButtonVisible = topicFilterChip.hasActiveFilters,
             onClearButtonClick = {
                 onAction(RecordAction.OnRemoveFilters(filterType = RecordFilterChipType.TOPIC))
             },
-            isDropDownVisible = selectedFilterChipType == RecordFilterChipType.TOPIC,
+            isHighlighted = topicFilterChip.hasActiveFilters,
+            isDropDownVisible = topicFilterChip.isDropDownVisible,
             dropDownMenu = {
-                if (topics.isEmpty()) {
+                if (topicFilterChip.content.text.asString().isEmpty()) {
                     SelectableDropDownOptionsMenu(
                         items = listOf(
                             SelectableItem(
@@ -139,7 +136,7 @@ fun RecordFilterRow(
                         ),
                         itemDisplayText = { it },
                         onDismiss = {
-                            onAction(RecordAction.OnDismissTopicDropDown)
+                            onAction(RecordAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.TOPIC))
                         },
                         onItemClick = {
 
@@ -149,15 +146,21 @@ fun RecordFilterRow(
                     )
                 } else {
                     SelectableDropDownOptionsMenu(
-                        items = topics,
+                        items = topicFilterChip.selectableItems,
                         itemDisplayText = { topic ->
                             topic
                         },
                         onDismiss = {
-                            onAction(RecordAction.OnDismissTopicDropDown)
+                            onAction(RecordAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.TOPIC))
                         },
                         onItemClick = { topic ->
-                            onAction(RecordAction.OnFilterByTopicClick(topic = topic.item))
+                            onAction(
+                                RecordAction.OnFilterByItem(
+                                    filterItem = FilterItem.TopicItem(
+                                        topic = topic.item
+                                    )
+                                )
+                            )
                         },
                         dropDownOffset = dropDownOffset,
                         maxDropDownHeight = maxDropDownHeight,
@@ -169,8 +172,7 @@ fun RecordFilterRow(
                         }
                     )
                 }
-            },
-            isHighlighted = hasActiveTopicFilters || selectedFilterChipType == RecordFilterChipType.TOPIC
+            }
         )
     }
 }

@@ -64,18 +64,13 @@ fun RecordScreen(
                 .padding(innerPadding)
         ) {
             RecordFilterRow(
-                moodChipContent = state.moodChipContent,
-                hasActiveMoodFilters = state.hasActiveMoodFilters,
-                selectedFilterChipType = state.selectedFilterChipType,
-                moods = state.moods,
-                topicChipTitle = state.topicChipTitle,
-                hasActiveTopicFilters = state.hasActiveTopicFilters,
-                topics = state.topics,
+                moodFilterChip = state.moodFilterChipData,
+                topicFilterChip = state.topicFilterChipData,
                 onAction = onAction,
                 modifier = Modifier
                     .fillMaxWidth()
             )
-            
+
             when {
                 state.isLoadingData -> {
                     CircularProgressIndicator(

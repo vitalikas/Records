@@ -34,14 +34,14 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 @Composable
 fun MultiChoiceChip(
     modifier: Modifier = Modifier,
+    leadingContent: (@Composable () -> Unit)? = null,
     displayText: String,
     onClick: () -> Unit,
-    isClearVisible: Boolean,
+    isClearButtonVisible: Boolean,
     onClearButtonClick: () -> Unit,
     isHighlighted: Boolean,
     isDropDownVisible: Boolean,
-    dropDownMenu: @Composable () -> Unit,
-    leadingContent: (@Composable () -> Unit)? = null
+    dropDownMenu: @Composable () -> Unit
 ) {
     val containerColor = if (isHighlighted) {
         MaterialTheme.colorScheme.surface
@@ -94,7 +94,7 @@ fun MultiChoiceChip(
             )
 
             AnimatedVisibility(
-                visible = isClearVisible
+                visible = isClearButtonVisible
             ) {
                 IconButton(
                     onClick = onClearButtonClick,
@@ -123,7 +123,7 @@ private fun MultiChoiceChipPreview() {
         MultiChoiceChip(
             displayText = "All topics",
             onClick = {},
-            isClearVisible = true,
+            isClearButtonVisible = true,
             onClearButtonClick = {},
             isHighlighted = true,
             isDropDownVisible = true,

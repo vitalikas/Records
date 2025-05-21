@@ -13,7 +13,8 @@ import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
 import lt.vitalijus.records.core.presentation.util.UiText
 import lt.vitalijus.records.record.presentation.models.MoodUi
-import lt.vitalijus.records.record.presentation.record.models.MoodChipContent
+import lt.vitalijus.records.record.presentation.record.models.FilterItem
+import lt.vitalijus.records.record.presentation.record.models.MoodChipItemContent
 import lt.vitalijus.records.record.presentation.record.models.RecordFilterChipType
 
 class RecordViewModel : ViewModel() {
@@ -47,15 +48,28 @@ class RecordViewModel : ViewModel() {
 
             }
 
-            RecordAction.OnMoodChipClick -> {
-                _state.update {
-                    it.copy(selectedFilterChipType = RecordFilterChipType.MOOD)
-                }
-            }
+            is RecordAction.OnFilterChipClick -> {
+                val type = action.chipType
+                when (type) {
+                    RecordFilterChipType.MOOD -> {
+                        _state.update {
+                            it.copy(
+                                moodFilterChipData = it.moodFilterChipData.copy(
+                                    isDropDownVisible = !it.moodFilterChipData.isDropDownVisible
+                                )
+                            )
+                        }
+                    }
 
-            RecordAction.OnTopicChipClick -> {
-                _state.update {
-                    it.copy(selectedFilterChipType = RecordFilterChipType.TOPIC)
+                    RecordFilterChipType.TOPIC -> {
+                        _state.update {
+                            it.copy(
+                                topicFilterChipData = it.topicFilterChipData.copy(
+                                    isDropDownVisible = !it.topicFilterChipData.isDropDownVisible
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
@@ -75,19 +89,40 @@ class RecordViewModel : ViewModel() {
 
             }
 
-            RecordAction.OnDismissTopicDropDown,
-            RecordAction.OnDismissMoodDropDown -> {
-                _state.update {
-                    it.copy(selectedFilterChipType = null)
+            is RecordAction.OnDismissFilterDropDown -> {
+                when (action.filterType) {
+                    RecordFilterChipType.MOOD -> {
+                        _state.update {
+                            it.copy(
+                                moodFilterChipData = it.moodFilterChipData.copy(
+                                    isDropDownVisible = false
+                                )
+                            )
+                        }
+                    }
+
+                    RecordFilterChipType.TOPIC -> {
+                        _state.update {
+                            it.copy(
+                                topicFilterChipData = it.topicFilterChipData.copy(
+                                    isDropDownVisible = false
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
-            is RecordAction.OnFilterByMoodClick -> {
-                toggleMoodFilter(action.moodUi)
-            }
+            is RecordAction.OnFilterByItem -> {
+                when (action.filterItem) {
+                    is FilterItem.MoodItem -> {
+                        toggleMoodFilter(moodUi = action.filterItem.moodUi)
+                    }
 
-            is RecordAction.OnFilterByTopicClick -> {
-                toggleTopicFilter(action.topic)
+                    is FilterItem.TopicItem -> {
+                        toggleTopicFilter(topic = action.filterItem.topic)
+                    }
+                }
             }
         }
     }
@@ -114,27 +149,33 @@ class RecordViewModel : ViewModel() {
 
     private fun observeFilters() {
         combine(
-            selectedTopicFilters,
-            selectedMoodFilters
-        ) { selectedTopics, selectedMoods ->
+            selectedMoodFilters,
+            selectedTopicFilters
+        ) { selectedMoods, selectedTopics ->
             _state.update {
                 it.copy(
-                    topics = it.topics.map { topic ->
-                        SelectableItem(
-                            item = topic.item,
-                            selected = selectedTopics.contains(topic.item)
-                        )
-                    },
-                    moods = MoodUi.entries.map { mood ->
-                        SelectableItem(
-                            item = mood,
-                            selected = selectedMoods.contains(mood)
-                        )
-                    },
-                    hasActiveTopicFilters = selectedTopics.isNotEmpty(),
-                    hasActiveMoodFilters = selectedMoods.isNotEmpty(),
-                    topicChipTitle = selectedTopics.deriveTopicsToText(),
-                    moodChipContent = selectedMoods.asMoodChipContent()
+                    moodFilterChipData = it.moodFilterChipData.copy(
+                        selectableItems = MoodUi.entries.map { mood ->
+                            SelectableItem(
+                                item = mood,
+                                selected = selectedMoods.contains(mood)
+                            )
+                        },
+                        content = selectedMoods.asMoodChipContent(),
+                        hasActiveFilters = selectedMoods.isNotEmpty()
+                    ),
+                    topicFilterChipData = it.topicFilterChipData.copy(
+                        selectableItems = it.topicFilterChipData.selectableItems.map { topic ->
+                            SelectableItem(
+                                item = topic.item,
+                                selected = selectedTopics.contains(topic.item)
+                            )
+                        },
+                        content = it.topicFilterChipData.content.copy(
+                            text = selectedTopics.deriveTopicsToText()
+                        ),
+                        hasActiveFilters = selectedTopics.isNotEmpty()
+                    )
                 )
             }
         }.launchIn(viewModelScope)
@@ -152,20 +193,20 @@ class RecordViewModel : ViewModel() {
         }
     }
 
-    private fun List<MoodUi>.asMoodChipContent(): MoodChipContent {
+    private fun List<MoodUi>.asMoodChipContent(): MoodChipItemContent {
         if (this.isEmpty()) {
-            return MoodChipContent()
+            return MoodChipItemContent()
         }
 
         val moodIcons = this.map { it.iconSet.fill }
         val moodNames = this.map { it.title }
         return when (size) {
-            1 -> MoodChipContent(
+            1 -> MoodChipItemContent(
                 iconsRes = moodIcons,
                 title = moodNames.first()
             )
 
-            2 -> MoodChipContent(
+            2 -> MoodChipItemContent(
                 iconsRes = moodIcons,
                 title = UiText.Combined(
                     format = "%s, %s",
@@ -175,7 +216,7 @@ class RecordViewModel : ViewModel() {
 
             else -> {
                 val extraElementCount = size - 2
-                MoodChipContent(
+                MoodChipItemContent(
                     iconsRes = moodIcons,
                     title = UiText.Combined(
                         format = "%s, %s +$extraElementCount",
