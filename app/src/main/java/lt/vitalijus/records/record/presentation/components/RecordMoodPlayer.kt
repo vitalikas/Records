@@ -25,6 +25,7 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.util.formatMMSS
 import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.record.models.PlaybackState
+import lt.vitalijus.records.record.presentation.record.models.TrackSizeInfo
 import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -42,6 +43,7 @@ fun RecordMoodPlayer(
     modifier: Modifier = Modifier,
     amplitudeBarWidth: Dp = 5.dp,
     amplitudeBarSpacing: Dp = 4.dp,
+    onTrackSizeAvailable: (TrackSizeInfo) -> Unit
 ) {
     val iconTint = when (moodUi) {
         null -> MoodPrimary80
@@ -129,6 +131,7 @@ private fun RecordMoodPlayerPreview() {
             durationPlayed = 125.seconds,
             totalPlaybackDuration = 250.seconds,
             powerRatios = ratios,
+            onTrackSizeAvailable = {},
             onPlayClick = {},
             onPauseClick = {},
             modifier = Modifier

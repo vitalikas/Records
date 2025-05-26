@@ -106,7 +106,7 @@ private fun RecordExpandableTextPreview() {
     RecordsTheme {
         RecordExpandableText(
             text = buildString {
-                repeat(100) {
+                repeat(30) {
                     append("Hello ")
                 }
             }
