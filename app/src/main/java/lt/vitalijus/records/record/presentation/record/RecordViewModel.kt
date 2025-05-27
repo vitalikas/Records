@@ -124,6 +124,18 @@ class RecordViewModel : ViewModel() {
                     }
                 }
             }
+
+            RecordAction.OnPauseClick -> {
+
+            }
+
+            is RecordAction.OnPlayClick -> {
+
+            }
+
+            is RecordAction.OnTrackSizeAvailable -> {
+
+            }
         }
     }
 

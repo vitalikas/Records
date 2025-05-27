@@ -19,6 +19,7 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.bgGradient
 import lt.vitalijus.records.record.presentation.record.components.RecordFilterRow
 import lt.vitalijus.records.record.presentation.record.components.RecordFloatingActionButton
+import lt.vitalijus.records.record.presentation.record.components.RecordList
 import lt.vitalijus.records.record.presentation.record.components.RecordsEmptyBackground
 import lt.vitalijus.records.record.presentation.record.components.RecordsTopBar
 
@@ -87,6 +88,21 @@ fun RecordScreen(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
+                    )
+                }
+
+                else -> {
+                    RecordList(
+                        sections = state.recordDaySections,
+                        onPlayClick = { recordId ->
+                            onAction(RecordAction.OnPlayClick(recordId))
+                        },
+                        onPauseClick = {
+                            onAction(RecordAction.OnPauseClick)
+                        },
+                        onTrackSizeAvailable = { trackSizeInfo ->
+                            onAction(RecordAction.OnTrackSizeAvailable(trackSizeInfo))
+                        }
                     )
                 }
             }

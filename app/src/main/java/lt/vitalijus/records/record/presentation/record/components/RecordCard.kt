@@ -53,7 +53,8 @@ fun RecordCard(
                     text = recordUi.title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
                 )
 
                 Text(

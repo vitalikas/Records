@@ -25,7 +25,7 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 fun RecordExpandableText(
     text: String,
     modifier: Modifier = Modifier,
-    collapsedMaxLines: Int = 3,
+    collapsedMaxLines: Int = 3
 ) {
     var isExpanded by remember {
         mutableStateOf(false)
@@ -106,7 +106,7 @@ private fun RecordExpandableTextPreview() {
     RecordsTheme {
         RecordExpandableText(
             text = buildString {
-                repeat(30) {
+                repeat(100) {
                     append("Hello ")
                 }
             }

@@ -66,7 +66,10 @@ fun RecordTimelineItem(
             )
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(
+            modifier = Modifier
+                .width(12.dp)
+        )
 
         RecordCard(
             recordUi = recordUi,

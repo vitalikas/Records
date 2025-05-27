@@ -14,7 +14,11 @@ data object PreviewModels {
         title = "My audio record",
         mood = MoodUi.STRESSED,
         recordedAt = Instant.now(),
-        note = (1..50).map { "Hello" }.joinToString { " " },
+        note = buildString {
+            repeat(100) {
+                append("Hello ")
+            }
+        },
         topics = listOf("Love", "Work"),
         amplitudes = (1..30).map { Random.nextFloat() },
         playbackTotalDuration = 250.seconds,
