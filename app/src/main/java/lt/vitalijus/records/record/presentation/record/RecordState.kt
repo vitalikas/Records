@@ -2,11 +2,13 @@ package lt.vitalijus.records.record.presentation.record
 
 import lt.vitalijus.records.core.presentation.util.UiText
 import lt.vitalijus.records.record.presentation.models.RecordUi
+import lt.vitalijus.records.record.presentation.record.models.AudioCaptureMethod
 import lt.vitalijus.records.record.presentation.record.models.FilterChip
 import lt.vitalijus.records.record.presentation.record.models.RecordDaySection
 
 data class RecordState(
     val records: Map<UiText, List<RecordUi>> = emptyMap(),
+    val currentCaptureMethod: AudioCaptureMethod? = null,
     val moodFilterChipData: FilterChip.MoodFilterChip = FilterChip.MoodFilterChip(),
     val topicFilterChipData: FilterChip.TopicFilterChip = FilterChip.TopicFilterChip(),
     val hasRecorded: Boolean = false,

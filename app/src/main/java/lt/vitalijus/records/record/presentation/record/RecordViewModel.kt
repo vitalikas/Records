@@ -2,13 +2,16 @@ package lt.vitalijus.records.record.presentation.record
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
 import lt.vitalijus.records.core.presentation.util.UiText
@@ -16,6 +19,7 @@ import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.record.models.FilterItem
 import lt.vitalijus.records.record.presentation.record.models.MoodChipItemContent
 import lt.vitalijus.records.record.presentation.record.models.RecordFilterChipType
+import timber.log.Timber
 
 class RecordViewModel : ViewModel() {
 
@@ -23,6 +27,9 @@ class RecordViewModel : ViewModel() {
 
     private val selectedMoodFilters = MutableStateFlow<List<MoodUi>>(emptyList())
     private val selectedTopicFilters = MutableStateFlow<List<String>>(emptyList())
+
+    private val eventChannel = Channel<RecordEvent>()
+    val events = eventChannel.receiveAsFlow()
 
     private val _state = MutableStateFlow(RecordState())
     val state = _state
@@ -40,12 +47,14 @@ class RecordViewModel : ViewModel() {
 
     fun onAction(action: RecordAction) {
         when (action) {
-            RecordAction.OnFabClick -> {
-
-            }
-
-            RecordAction.OnFabLongClick -> {
-
+            is RecordAction.OnFabClick -> {
+                requestAudioPermission()
+                val method = action.captureMethod
+                _state.update {
+                    it.copy(
+                        currentCaptureMethod = method
+                    )
+                }
             }
 
             is RecordAction.OnFilterChipClick -> {
@@ -136,6 +145,16 @@ class RecordViewModel : ViewModel() {
             is RecordAction.OnTrackSizeAvailable -> {
 
             }
+
+            RecordAction.OnAudioPermissionGranted -> {
+                Timber.d("Audio recording started")
+            }
+        }
+    }
+
+    private fun requestAudioPermission() {
+        viewModelScope.launch {
+            eventChannel.send(RecordEvent.RequestAudioPermission)
         }
     }
 

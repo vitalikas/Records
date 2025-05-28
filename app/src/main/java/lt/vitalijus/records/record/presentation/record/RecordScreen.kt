@@ -1,5 +1,8 @@
 package lt.vitalijus.records.record.presentation.record
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,17 +20,34 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.bgGradient
+import lt.vitalijus.records.core.presentation.util.ObserveAsEvents
 import lt.vitalijus.records.record.presentation.record.components.RecordFilterRow
 import lt.vitalijus.records.record.presentation.record.components.RecordFloatingActionButton
 import lt.vitalijus.records.record.presentation.record.components.RecordList
 import lt.vitalijus.records.record.presentation.record.components.RecordsEmptyBackground
 import lt.vitalijus.records.record.presentation.record.components.RecordsTopBar
+import lt.vitalijus.records.record.presentation.record.models.AudioCaptureMethod
 
 @Composable
 fun RecordRoot(
     viewModel: RecordViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted && state.currentCaptureMethod == AudioCaptureMethod.STANDARD) {
+            viewModel.onAction(RecordAction.OnAudioPermissionGranted)
+        }
+    }
+    ObserveAsEvents(viewModel.events) { event ->
+        when (event) {
+            RecordEvent.RequestAudioPermission -> {
+                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        }
+    }
 
     RecordScreen(
         state = state,
@@ -44,7 +64,9 @@ fun RecordScreen(
         floatingActionButton = {
             RecordFloatingActionButton(
                 onClick = {
-                    onAction(RecordAction.OnFabClick)
+                    onAction(
+                        RecordAction.OnFabClick(captureMethod = AudioCaptureMethod.STANDARD)
+                    )
                 }
             )
         },
