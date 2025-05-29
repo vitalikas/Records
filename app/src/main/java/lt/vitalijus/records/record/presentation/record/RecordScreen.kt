@@ -1,6 +1,7 @@
 package lt.vitalijus.records.record.presentation.record
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,14 +20,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.bgGradient
 import lt.vitalijus.records.core.presentation.util.ObserveAsEvents
 import lt.vitalijus.records.core.presentation.util.isAppInForeground
+import lt.vitalijus.records.record.presentation.record.components.RecordDraggableFloatingActionButton
 import lt.vitalijus.records.record.presentation.record.components.RecordFilterRow
-import lt.vitalijus.records.record.presentation.record.components.RecordFloatingActionButton
 import lt.vitalijus.records.record.presentation.record.components.RecordList
 import lt.vitalijus.records.record.presentation.record.components.RecordRecordingSheet
 import lt.vitalijus.records.record.presentation.record.components.RecordsEmptyBackground
@@ -87,15 +89,43 @@ fun RecordRoot(
 @Composable
 fun RecordScreen(
     state: RecordState,
-    onAction: (RecordAction) -> Unit,
+    onAction: (RecordAction) -> Unit
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         floatingActionButton = {
-            RecordFloatingActionButton(
+            RecordDraggableFloatingActionButton(
                 onClick = {
                     onAction(
-                        RecordAction.OnFabClick(captureMethod = AudioCaptureMethod.STANDARD)
+                        RecordAction.OnRequestRecordAudioPermission(
+                            captureMethod = AudioCaptureMethod.STANDARD
+                        )
                     )
+                },
+                isQuickRecording = state.recordingState == RecordingState.QUICK_CAPTURE,
+                onLongPressStart = {
+                    val hasPermission = ContextCompat
+                        .checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                    if (hasPermission) {
+                        onAction(RecordAction.OnRecordButtonLongClick)
+                    } else {
+                        onAction(
+                            RecordAction.OnRequestRecordAudioPermission(
+                                captureMethod = AudioCaptureMethod.QUICK
+                            )
+                        )
+                    }
+                },
+                onLongPressEnd = { cancelledRecording ->
+                    if (cancelledRecording) {
+                        onAction(RecordAction.OnCancelRecordingClick)
+                    } else {
+                        onAction(RecordAction.OnCompleteRecording)
+                    }
                 }
             )
         },

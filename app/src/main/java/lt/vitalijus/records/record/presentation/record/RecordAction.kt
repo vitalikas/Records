@@ -14,7 +14,8 @@ sealed interface RecordAction {
     data class OnPlayAudioClick(val recordId: Int) : RecordAction
     data object OnPauseAudioClick : RecordAction
     data class OnTrackSizeAvailable(val trackSizeInfo: TrackSizeInfo) : RecordAction
-    data class OnFabClick(val captureMethod: AudioCaptureMethod) : RecordAction
+    data class OnRequestRecordAudioPermission(val captureMethod: AudioCaptureMethod) : RecordAction
+    data object OnRecordButtonLongClick : RecordAction
     data object OnSettingsClick : RecordAction
     data object OnAudioPermissionGranted : RecordAction
     data object OnCancelRecordingClick : RecordAction

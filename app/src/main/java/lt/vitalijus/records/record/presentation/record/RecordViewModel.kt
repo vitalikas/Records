@@ -59,7 +59,7 @@ class RecordViewModel(
 
     fun onAction(action: RecordAction) {
         when (action) {
-            is RecordAction.OnFabClick -> {
+            is RecordAction.OnRequestRecordAudioPermission -> {
                 requestAudioPermission()
                 val method = action.captureMethod
                 _state.update {
@@ -176,6 +176,10 @@ class RecordViewModel(
 
             RecordAction.OnResumeRecordingClick -> {
                 resumeRecording()
+            }
+
+            RecordAction.OnRecordButtonLongClick -> {
+                startRecording(captureMethod = AudioCaptureMethod.QUICK)
             }
         }
     }
