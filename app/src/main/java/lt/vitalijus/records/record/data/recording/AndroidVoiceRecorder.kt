@@ -23,6 +23,7 @@ import java.io.File
 import java.io.IOException
 import java.util.UUID
 import kotlin.time.Duration.Companion.microseconds
+import kotlin.time.Duration.Companion.milliseconds
 
 class AndroidVoiceRecorder(
     private val context: Context,
@@ -129,7 +130,7 @@ class AndroidVoiceRecorder(
 
                 _recordingDetails.update {
                     it.copy(
-                        duration = it.duration + elapsedTime.microseconds
+                        duration = it.duration + elapsedTime.milliseconds
                     )
                 }
 

@@ -6,7 +6,10 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -15,13 +18,22 @@ import kotlinx.coroutines.launch
 import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
 import lt.vitalijus.records.core.presentation.util.UiText
+import lt.vitalijus.records.record.data.recording.AndroidVoiceRecorder
 import lt.vitalijus.records.record.presentation.models.MoodUi
+import lt.vitalijus.records.record.presentation.record.models.AudioCaptureMethod
 import lt.vitalijus.records.record.presentation.record.models.FilterItem
 import lt.vitalijus.records.record.presentation.record.models.MoodChipItemContent
 import lt.vitalijus.records.record.presentation.record.models.RecordFilterChipType
-import timber.log.Timber
+import lt.vitalijus.records.record.presentation.record.models.RecordingState
+import kotlin.time.Duration.Companion.seconds
 
-class RecordViewModel : ViewModel() {
+class RecordViewModel(
+    private val voiceRecorder: AndroidVoiceRecorder
+) : ViewModel() {
+
+    companion object {
+        private val MIN_RECORD_DURATION = 1.5.seconds
+    }
 
     private var hasLoadedInitialData = false
 
@@ -134,11 +146,11 @@ class RecordViewModel : ViewModel() {
                 }
             }
 
-            RecordAction.OnPauseClick -> {
+            is RecordAction.OnPlayAudioClick -> {
 
             }
 
-            is RecordAction.OnPlayClick -> {
+            RecordAction.OnPauseAudioClick -> {
 
             }
 
@@ -147,7 +159,23 @@ class RecordViewModel : ViewModel() {
             }
 
             RecordAction.OnAudioPermissionGranted -> {
-                Timber.d("Audio recording started")
+                startRecording(captureMethod = AudioCaptureMethod.STANDARD)
+            }
+
+            RecordAction.OnCancelRecordingClick -> {
+                cancelRecording()
+            }
+
+            RecordAction.OnCompleteRecording -> {
+                stopRecording()
+            }
+
+            RecordAction.OnPauseRecordingClick -> {
+                pauseRecording()
+            }
+
+            RecordAction.OnResumeRecordingClick -> {
+                resumeRecording()
             }
         }
     }
@@ -156,6 +184,81 @@ class RecordViewModel : ViewModel() {
         viewModelScope.launch {
             eventChannel.send(RecordEvent.RequestAudioPermission)
         }
+    }
+
+    private fun startRecording(captureMethod: AudioCaptureMethod) {
+        _state.update {
+            it.copy(
+                recordingState = when (captureMethod) {
+                    AudioCaptureMethod.STANDARD -> RecordingState.NORMAL_CAPTURE
+                    AudioCaptureMethod.QUICK -> RecordingState.QUICK_CAPTURE
+                }
+            )
+        }
+
+        voiceRecorder.start()
+
+        if (captureMethod == AudioCaptureMethod.STANDARD) {
+            voiceRecorder.recordingDetails
+                .distinctUntilChangedBy { it.duration }
+                .map { recordingDetails ->
+                    recordingDetails.duration
+                }
+                .onEach { duration ->
+                    _state.update {
+                        it.copy(
+                            recordingElapsedDuration = duration
+                        )
+                    }
+                }
+                .launchIn(viewModelScope)
+        }
+    }
+
+    private fun pauseRecording() {
+        voiceRecorder.pause()
+        _state.update {
+            it.copy(
+                recordingState = RecordingState.PAUSED
+            )
+        }
+    }
+
+    private fun resumeRecording() {
+        voiceRecorder.resume()
+        _state.update {
+            it.copy(
+                recordingState = RecordingState.NORMAL_CAPTURE
+            )
+        }
+    }
+
+    private fun cancelRecording() {
+        voiceRecorder.cancel()
+        _state.update {
+            it.copy(
+                recordingState = RecordingState.NOT_RECORDING,
+                currentCaptureMethod = null
+            )
+        }
+    }
+
+    private fun stopRecording() {
+        voiceRecorder.stop()
+        _state.update {
+            it.copy(
+                recordingState = RecordingState.NOT_RECORDING
+            )
+        }
+        val recordingDetails = voiceRecorder.recordingDetails.value
+        viewModelScope.launch {
+            if (recordingDetails.duration < MIN_RECORD_DURATION) {
+                eventChannel.send(RecordEvent.RecordingTooShort)
+            } else {
+                eventChannel.send(RecordEvent.OnDoneRecording)
+            }
+        }
+
     }
 
     private fun toggleMoodFilter(moodUi: MoodUi) {
