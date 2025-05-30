@@ -74,9 +74,9 @@ fun RecordRoot(
     }
 
     val isAppInForeground by isAppInForeground()
-    LaunchedEffect(isAppInForeground, state.recordingState) {
-        if (state.recordingState == RecordingState.NORMAL_CAPTURE && !isAppInForeground) {
-            viewModel.onAction(RecordAction.OnPauseRecordingClick)
+    LaunchedEffect(isAppInForeground, state.currentCaptureMethod) {
+        if (state.currentCaptureMethod == AudioCaptureMethod.STANDARD && !isAppInForeground) {
+            viewModel.onAction(RecordAction.OnPauseRecording)
         }
     }
 
@@ -103,7 +103,7 @@ fun RecordScreen(
                         )
                     )
                 },
-                isQuickRecording = state.recordingState == RecordingState.QUICK_CAPTURE,
+                isQuickRecording = state.currentCaptureMethod == AudioCaptureMethod.QUICK,
                 onLongPressStart = {
                     val hasPermission = ContextCompat
                         .checkSelfPermission(
@@ -122,7 +122,7 @@ fun RecordScreen(
                 },
                 onLongPressEnd = { cancelledRecording ->
                     if (cancelledRecording) {
-                        onAction(RecordAction.OnCancelRecordingClick)
+                        onAction(RecordAction.OnCancelRecording)
                     } else {
                         onAction(RecordAction.OnCompleteRecording)
                     }
@@ -189,13 +189,13 @@ fun RecordScreen(
             }
         }
 
-        if (state.recordingState in listOf(RecordingState.NORMAL_CAPTURE, RecordingState.PAUSED)) {
+        if (state.currentCaptureMethod == AudioCaptureMethod.STANDARD) {
             RecordRecordingSheet(
                 formattedRecordDuration = state.formattedRecordDuration,
-                isRecording = state.recordingState == RecordingState.NORMAL_CAPTURE,
-                onDismiss = { onAction(RecordAction.OnCancelRecordingClick) },
-                onPauseClick = { onAction(RecordAction.OnPauseRecordingClick) },
-                onResumeClick = { onAction(RecordAction.OnResumeRecordingClick) },
+                isRecording = state.recordingState == RecordingState.RECORDING,
+                onDismiss = { onAction(RecordAction.OnCancelRecording) },
+                onPauseClick = { onAction(RecordAction.OnPauseRecording) },
+                onResumeClick = { onAction(RecordAction.OnResumeRecording) },
                 onCompleteRecording = { onAction(RecordAction.OnCompleteRecording) }
             )
         }

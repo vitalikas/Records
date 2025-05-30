@@ -159,10 +159,12 @@ class RecordViewModel(
             }
 
             RecordAction.OnAudioPermissionGranted -> {
-                startRecording(captureMethod = AudioCaptureMethod.STANDARD)
+                startRecording(
+                    captureMethod = AudioCaptureMethod.STANDARD
+                )
             }
 
-            RecordAction.OnCancelRecordingClick -> {
+            RecordAction.OnCancelRecording -> {
                 cancelRecording()
             }
 
@@ -170,16 +172,18 @@ class RecordViewModel(
                 stopRecording()
             }
 
-            RecordAction.OnPauseRecordingClick -> {
+            RecordAction.OnPauseRecording -> {
                 pauseRecording()
             }
 
-            RecordAction.OnResumeRecordingClick -> {
+            RecordAction.OnResumeRecording -> {
                 resumeRecording()
             }
 
             RecordAction.OnRecordButtonLongClick -> {
-                startRecording(captureMethod = AudioCaptureMethod.QUICK)
+                startRecording(
+                    captureMethod = AudioCaptureMethod.QUICK
+                )
             }
         }
     }
@@ -190,13 +194,13 @@ class RecordViewModel(
         }
     }
 
-    private fun startRecording(captureMethod: AudioCaptureMethod) {
+    private fun startRecording(
+        captureMethod: AudioCaptureMethod
+    ) {
         _state.update {
             it.copy(
-                recordingState = when (captureMethod) {
-                    AudioCaptureMethod.STANDARD -> RecordingState.NORMAL_CAPTURE
-                    AudioCaptureMethod.QUICK -> RecordingState.QUICK_CAPTURE
-                }
+                recordingState = RecordingState.RECORDING,
+                currentCaptureMethod = captureMethod
             )
         }
 
@@ -232,7 +236,7 @@ class RecordViewModel(
         voiceRecorder.resume()
         _state.update {
             it.copy(
-                recordingState = RecordingState.NORMAL_CAPTURE
+                recordingState = RecordingState.RECORDING
             )
         }
     }
@@ -262,7 +266,6 @@ class RecordViewModel(
                 eventChannel.send(RecordEvent.OnDoneRecording)
             }
         }
-
     }
 
     private fun toggleMoodFilter(moodUi: MoodUi) {
