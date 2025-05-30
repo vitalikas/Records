@@ -48,27 +48,31 @@ fun RecordRoot(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted && state.currentCaptureMethod == AudioCaptureMethod.STANDARD) {
-            viewModel.onAction(RecordAction.OnAudioPermissionGranted)
+            viewModel.onEvent(RecordEvent.AudioPermission.OnGranted)
         }
     }
 
     val context = LocalContext.current
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            RecordEvent.RequestAudioPermission -> {
+            is RecordEvent.AudioPermission.OnRequest -> {
                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
 
-            RecordEvent.OnDoneRecording -> {
+            RecordEvent.RecordState.OnDone -> {
                 Timber.d("Recording done")
             }
 
-            RecordEvent.RecordingTooShort -> {
+            RecordEvent.RecordState.OnTooShort -> {
                 Toast.makeText(
                     context,
                     context.getString(R.string.audio_recording_was_too_short),
                     Toast.LENGTH_LONG
                 ).show()
+            }
+
+            RecordEvent.AudioPermission.OnGranted -> {
+
             }
         }
     }
@@ -82,14 +86,16 @@ fun RecordRoot(
 
     RecordScreen(
         state = state,
-        onAction = viewModel::onAction
+        onAction = viewModel::onAction,
+        onEvent = viewModel::onEvent
     )
 }
 
 @Composable
 fun RecordScreen(
     state: RecordState,
-    onAction: (RecordAction) -> Unit
+    onAction: (RecordAction) -> Unit,
+    onEvent: (RecordEvent) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -97,8 +103,8 @@ fun RecordScreen(
         floatingActionButton = {
             RecordDraggableFloatingActionButton(
                 onClick = {
-                    onAction(
-                        RecordAction.OnRequestRecordAudioPermission(
+                    onEvent(
+                        RecordEvent.AudioPermission.OnRequest(
                             captureMethod = AudioCaptureMethod.STANDARD
                         )
                     )
@@ -113,8 +119,8 @@ fun RecordScreen(
                     if (hasPermission) {
                         onAction(RecordAction.OnRecordButtonLongClick)
                     } else {
-                        onAction(
-                            RecordAction.OnRequestRecordAudioPermission(
+                        onEvent(
+                            RecordEvent.AudioPermission.OnRequest(
                                 captureMethod = AudioCaptureMethod.QUICK
                             )
                         )
@@ -211,7 +217,8 @@ private fun Preview() {
                 isLoadingData = false,
                 hasRecorded = false
             ),
-            onAction = {}
+            onAction = {},
+            onEvent = {}
         )
     }
 }

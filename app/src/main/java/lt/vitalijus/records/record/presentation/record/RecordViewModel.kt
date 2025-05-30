@@ -59,16 +59,6 @@ class RecordViewModel(
 
     fun onAction(action: RecordAction) {
         when (action) {
-            is RecordAction.OnRequestRecordAudioPermission -> {
-                requestAudioPermission()
-                val method = action.captureMethod
-                _state.update {
-                    it.copy(
-                        currentCaptureMethod = method
-                    )
-                }
-            }
-
             is RecordAction.OnFilterChipClick -> {
                 val type = action.chipType
                 when (type) {
@@ -158,12 +148,6 @@ class RecordViewModel(
 
             }
 
-            RecordAction.OnAudioPermissionGranted -> {
-                startRecording(
-                    captureMethod = AudioCaptureMethod.STANDARD
-                )
-            }
-
             RecordAction.OnCancelRecording -> {
                 cancelRecording()
             }
@@ -188,9 +172,43 @@ class RecordViewModel(
         }
     }
 
-    private fun requestAudioPermission() {
-        viewModelScope.launch {
-            eventChannel.send(RecordEvent.RequestAudioPermission)
+    fun onEvent(event: RecordEvent) {
+        when (event) {
+            RecordEvent.AudioPermission.OnGranted -> {
+                startRecording(
+                    captureMethod = AudioCaptureMethod.STANDARD
+                )
+            }
+
+            is RecordEvent.AudioPermission.OnRequest -> {
+                val captureMethod = event.captureMethod
+                viewModelScope.launch {
+                    eventChannel.send(
+                        RecordEvent.AudioPermission.OnRequest(captureMethod = captureMethod)
+                    )
+                }
+                _state.update {
+                    it.copy(
+                        currentCaptureMethod = captureMethod
+                    )
+                }
+            }
+
+            RecordEvent.RecordState.OnDone -> {
+                viewModelScope.launch {
+                    eventChannel.send(
+                        RecordEvent.RecordState.OnDone
+                    )
+                }
+            }
+
+            RecordEvent.RecordState.OnTooShort -> {
+                viewModelScope.launch {
+                    eventChannel.send(
+                        RecordEvent.RecordState.OnTooShort
+                    )
+                }
+            }
         }
     }
 
@@ -261,9 +279,9 @@ class RecordViewModel(
         val recordingDetails = voiceRecorder.recordingDetails.value
         viewModelScope.launch {
             if (recordingDetails.duration < MIN_RECORD_DURATION) {
-                eventChannel.send(RecordEvent.RecordingTooShort)
+                eventChannel.send(RecordEvent.RecordState.OnTooShort)
             } else {
-                eventChannel.send(RecordEvent.OnDoneRecording)
+                eventChannel.send(RecordEvent.RecordState.OnDone)
             }
         }
     }

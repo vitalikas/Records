@@ -1,8 +1,16 @@
 package lt.vitalijus.records.record.presentation.record
 
+import lt.vitalijus.records.record.presentation.record.models.AudioCaptureMethod
+
 sealed interface RecordEvent {
 
-    data object RequestAudioPermission : RecordEvent
-    data object RecordingTooShort : RecordEvent
-    data object OnDoneRecording : RecordEvent
+    sealed interface AudioPermission : RecordEvent {
+        data class OnRequest(val captureMethod: AudioCaptureMethod) : AudioPermission
+        data object OnGranted : AudioPermission
+    }
+
+    sealed interface RecordState: RecordEvent {
+        data object OnTooShort : RecordState
+        data object OnDone : RecordState
+    }
 }
