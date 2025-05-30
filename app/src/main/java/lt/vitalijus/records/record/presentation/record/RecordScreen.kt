@@ -27,6 +27,7 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.bgGradient
 import lt.vitalijus.records.core.presentation.util.ObserveAsEvents
 import lt.vitalijus.records.core.presentation.util.isAppInForeground
+import lt.vitalijus.records.record.domain.recording.RecordingDetails
 import lt.vitalijus.records.record.presentation.record.components.RecordDraggableFloatingActionButton
 import lt.vitalijus.records.record.presentation.record.components.RecordFilterRow
 import lt.vitalijus.records.record.presentation.record.components.RecordList
@@ -39,7 +40,8 @@ import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
 @Composable
-fun RecordRoot(
+fun RecordsRoot(
+    onNavigateToCreateRecord: (RecordingDetails) -> Unit,
     viewModel: RecordViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -59,8 +61,9 @@ fun RecordRoot(
                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
 
-            RecordEvent.RecordState.OnDone -> {
+            is RecordEvent.RecordState.OnDone -> {
                 Timber.d("Recording done")
+                onNavigateToCreateRecord(event.recordingDetails)
             }
 
             RecordEvent.RecordState.OnTooShort -> {

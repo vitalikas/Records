@@ -8,8 +8,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
+import lt.vitalijus.records.app.navigation.NavigationRoot
+import lt.vitalijus.records.app.navigation.NavigationRoute
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
-import lt.vitalijus.records.record.presentation.record.RecordRoot
+import lt.vitalijus.records.record.domain.recording.RecordingDetails
+import lt.vitalijus.records.record.presentation.record.RecordsRoot
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,7 +21,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RecordsTheme {
-                RecordRoot()
+                NavigationRoot(
+                    navController = rememberNavController()
+                )
             }
         }
     }

@@ -194,10 +194,11 @@ class RecordViewModel(
                 }
             }
 
-            RecordEvent.RecordState.OnDone -> {
+            is RecordEvent.RecordState.OnDone -> {
+                val recordingDetails = voiceRecorder.recordingDetails.value
                 viewModelScope.launch {
                     eventChannel.send(
-                        RecordEvent.RecordState.OnDone
+                        RecordEvent.RecordState.OnDone(recordingDetails = recordingDetails)
                     )
                 }
             }
@@ -281,7 +282,7 @@ class RecordViewModel(
             if (recordingDetails.duration < MIN_RECORD_DURATION) {
                 eventChannel.send(RecordEvent.RecordState.OnTooShort)
             } else {
-                eventChannel.send(RecordEvent.RecordState.OnDone)
+                eventChannel.send(RecordEvent.RecordState.OnDone(recordingDetails = recordingDetails))
             }
         }
     }
