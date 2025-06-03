@@ -16,7 +16,7 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.Pause
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.util.defaultShadow
 import lt.vitalijus.records.record.presentation.models.MoodUi
-import lt.vitalijus.records.record.presentation.record.models.PlaybackState
+import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 
 @Composable
 fun RecordPlaybackButton(

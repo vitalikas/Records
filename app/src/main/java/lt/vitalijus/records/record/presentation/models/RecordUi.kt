@@ -1,6 +1,6 @@
 package lt.vitalijus.records.record.presentation.models
 
-import lt.vitalijus.records.record.presentation.record.models.PlaybackState
+import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import lt.vitalijus.records.record.presentation.util.toReadableTime
 import kotlin.time.Duration
 import java.time.Instant as JavaInstant

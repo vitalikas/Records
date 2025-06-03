@@ -24,8 +24,8 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.MoodPrimary80
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.util.formatMMSS
 import lt.vitalijus.records.record.presentation.models.MoodUi
-import lt.vitalijus.records.record.presentation.record.models.PlaybackState
-import lt.vitalijus.records.record.presentation.record.models.TrackSizeInfo
+import lt.vitalijus.records.record.presentation.records.models.PlaybackState
+import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

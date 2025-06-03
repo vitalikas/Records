@@ -2,7 +2,7 @@ package lt.vitalijus.records.record.presentation.preview
 
 import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.models.RecordUi
-import lt.vitalijus.records.record.presentation.record.models.PlaybackState
+import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import java.time.Instant
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds

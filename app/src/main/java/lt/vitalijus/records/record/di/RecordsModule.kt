@@ -1,7 +1,9 @@
 package lt.vitalijus.records.record.di
 
 import lt.vitalijus.records.record.data.recording.AndroidVoiceRecorder
-import lt.vitalijus.records.record.presentation.record.RecordViewModel
+import lt.vitalijus.records.record.domain.recording.VoiceRecorder
+import lt.vitalijus.records.record.presentation.create_record.CreateRecordViewModel
+import lt.vitalijus.records.record.presentation.records.RecordViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -13,7 +15,9 @@ val recordsModule = module {
             context = androidContext(),
             applicationScope = get()
         )
-    } bind AndroidVoiceRecorder::class
+    } bind VoiceRecorder::class
 
     viewModelOf(::RecordViewModel)
+
+    viewModelOf(::CreateRecordViewModel)
 }

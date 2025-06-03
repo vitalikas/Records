@@ -9,7 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import lt.vitalijus.records.record.presentation.record.RecordsRoot
+import lt.vitalijus.records.record.presentation.create_record.CreateRecordRoot
+import lt.vitalijus.records.record.presentation.records.RecordsRoot
 import lt.vitalijus.records.record.presentation.util.toCreateRecordRoute
 
 @Composable
@@ -30,13 +31,7 @@ fun NavigationRoot(
         }
 
         composable<NavigationRoute.CreateRecord> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Create Record Screen")
-            }
+            CreateRecordRoot()
         }
     }
 }
