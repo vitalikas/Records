@@ -67,9 +67,9 @@ fun TopicsRow(
     ) {
         Box(
             modifier = Modifier
-                .height(24.dp)
-                .width(24.dp)
-                .align(Alignment.CenterVertically),
+                .height(32.dp)
+                .width(32.dp)
+                .align(Alignment.Top),
             contentAlignment = Alignment.CenterStart
         ) {
             Icon(

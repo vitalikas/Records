@@ -130,7 +130,7 @@ class CreateRecordViewModel : ViewModel() {
             .map {
                 it.addTopicText
             }
-            .debounce(500)
+            .debounce(250)
             .distinctUntilChanged()
             .onEach { query ->
                 _state.update {
