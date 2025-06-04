@@ -22,7 +22,6 @@ import timber.log.Timber
 import java.io.File
 import java.io.IOException
 import java.util.UUID
-import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 
 class AndroidVoiceRecorder(
@@ -39,8 +38,10 @@ class AndroidVoiceRecorder(
     private var tempFile = generateTempFile()
 
     private var recorder: MediaRecorder? = null
-    private var isRecording = false
+
     private val amplitudes = mutableListOf<Float>()
+
+    private var isRecording = false
     private var isPaused = false
 
     private val _recordingDetails = MutableStateFlow(RecordingDetails())
@@ -84,6 +85,57 @@ class AndroidVoiceRecorder(
             recorder?.release()
             recorder = null
         }
+    }
+
+    override fun pause() {
+        if (!isRecording || isPaused) {
+            return
+        }
+
+        recorder?.pause()
+
+        isRecording = false
+        isPaused = true
+
+        durationJob?.cancel()
+        amplitudeJob?.cancel()
+    }
+
+    override fun resume() {
+        isRecording = true
+        isPaused = false
+
+        recorder?.resume()
+
+        startTrackingDuration()
+        startTrackingAmplitudes()
+    }
+
+    override fun stop() {
+        try {
+            recorder?.apply {
+                stop()
+                release()
+
+                isRecording = false
+                isPaused = true
+            }
+        } catch (e: Exception) {
+            Timber.d(e, "Failed to stop recording")
+        } finally {
+            _recordingDetails.update {
+                it.copy(
+                    amplitudes = amplitudes.toList(),
+                    filePath = tempFile.absolutePath
+                )
+            }
+            cleanup()
+        }
+    }
+
+    override fun cancel() {
+        stop()
+        resetSession()
     }
 
     private fun resetSession() {
@@ -166,53 +218,5 @@ class AndroidVoiceRecorder(
         } else {
             0f
         }
-    }
-
-    override fun pause() {
-        if (!isRecording || isPaused) {
-            return
-        }
-
-        recorder?.pause()
-        isPaused = true
-
-        durationJob?.cancel()
-        amplitudeJob?.cancel()
-    }
-
-    override fun stop() {
-        try {
-            recorder?.apply {
-                stop()
-                release()
-            }
-        } catch (e: Exception) {
-            Timber.d(e, "Failed to stop recording")
-        } finally {
-            _recordingDetails.update {
-                it.copy(
-                    amplitudes = amplitudes.toList(),
-                    filePath = tempFile.absolutePath
-                )
-            }
-            cleanup()
-        }
-    }
-
-    override fun resume() {
-        if (!isRecording || !isPaused) {
-            return
-        }
-
-        recorder?.resume()
-        isPaused = false
-
-        startTrackingDuration()
-        startTrackingAmplitudes()
-    }
-
-    override fun cancel() {
-        stop()
-        resetSession()
     }
 }
