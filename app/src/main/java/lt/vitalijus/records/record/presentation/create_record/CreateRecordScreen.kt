@@ -50,12 +50,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.buttons.PrimaryButton
 import lt.vitalijus.records.core.presentation.designsystem.buttons.SecondaryButton
+import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
 import lt.vitalijus.records.core.presentation.designsystem.text_fields.TransparentHintTextField
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.secondary70
 import lt.vitalijus.records.core.presentation.designsystem.theme.secondary95
 import lt.vitalijus.records.record.presentation.components.RecordMoodPlayer
 import lt.vitalijus.records.record.presentation.create_record.components.SelectMoodSheet
+import lt.vitalijus.records.record.presentation.create_record.components.TopicsRow
 import lt.vitalijus.records.record.presentation.models.MoodUi
 import org.koin.androidx.compose.koinViewModel
 
@@ -124,7 +126,7 @@ fun CreateRecordScreen(
                 if (state.moodUi == null) {
                     FilledIconButton(
                         onClick = {
-                            onAction(CreateRecordAction.OnSelectMoodCick)
+                            onAction(CreateRecordAction.OnSelectMoodClick)
                         },
                         colors = IconButtonDefaults.filledIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.secondary95,
@@ -143,7 +145,7 @@ fun CreateRecordScreen(
                         modifier = Modifier
                             .height(32.dp)
                             .clickable {
-                                onAction(CreateRecordAction.OnSelectMoodCick)
+                                onAction(CreateRecordAction.OnSelectMoodClick)
                             },
                         contentScale = ContentScale.FillHeight
                     )
@@ -190,7 +192,25 @@ fun CreateRecordScreen(
                 }
             )
 
-            // TODO: Insert TopicsFlowRow
+            TopicsRow(
+                topics = state.topics,
+                addTopicText = state.addTopicText,
+                showCreateTopicOption = state.showCreateTopicOption,
+                showTopicSuggestions = state.showTopicSuggestions,
+                searchResults = state.searchResult,
+                onTopicClick = {
+                    onAction(CreateRecordAction.OnTopicClick(it))
+                },
+                onDismissTopicSuggestions = {
+                    onAction(CreateRecordAction.OnDismissTopicSuggestions)
+                },
+                onRemoveTopicClick = {
+                    onAction(CreateRecordAction.OnRemoveTopicClick(it))
+                },
+                onAddTopicTextChange = {
+                    onAction(CreateRecordAction.OnAddTopicTextChange(it))
+                }
+            )
 
             Row(
                 modifier = Modifier

@@ -9,7 +9,7 @@ sealed interface CreateRecordAction {
     data class OnTitleTextChange(val text: String) : CreateRecordAction
     data class OnAddTopicTextChange(val text: String) : CreateRecordAction
     data class OnNoteTextChange(val text: String) : CreateRecordAction
-    data object OnSelectMoodCick : CreateRecordAction
+    data object OnSelectMoodClick : CreateRecordAction
     data object OnDismissMoodSelector : CreateRecordAction
     data class OnMoodClick(val moodUi: MoodUi) : CreateRecordAction
     data object OnConfirmMood : CreateRecordAction
@@ -17,7 +17,6 @@ sealed interface CreateRecordAction {
     data object OnDismissTopicSuggestions : CreateRecordAction
     data object OnCancelClick : CreateRecordAction
     data object OnSaveClick : CreateRecordAction
-    data object OnCreateNewTopicClick : CreateRecordAction
     data object OnPlayAudioClick : CreateRecordAction
     data object OnPauseAudioClick : CreateRecordAction
     data class OnTrackSizeAvailable(val trackSizeInfo: TrackSizeInfo) : CreateRecordAction
