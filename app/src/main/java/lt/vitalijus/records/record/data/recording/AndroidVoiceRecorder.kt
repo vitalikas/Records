@@ -54,10 +54,6 @@ class AndroidVoiceRecorder(
     private val singleThreadDispatcher = Dispatchers.Default.limitedParallelism(1)
 
     override fun start() {
-        if (isRecording) {
-            return
-        }
-
         try {
             resetSession()
 
@@ -88,10 +84,6 @@ class AndroidVoiceRecorder(
     }
 
     override fun pause() {
-        if (!isRecording || isPaused) {
-            return
-        }
-
         recorder?.pause()
 
         isRecording = false
