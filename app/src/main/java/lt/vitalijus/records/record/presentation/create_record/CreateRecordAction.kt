@@ -21,4 +21,6 @@ sealed interface CreateRecordAction {
     data object OnPauseAudioClick : CreateRecordAction
     data class OnTrackSizeAvailable(val trackSizeInfo: TrackSizeInfo) : CreateRecordAction
     data class OnRemoveTopicClick(val topic: String) : CreateRecordAction
+    data object OnSystemGoBackClick : CreateRecordAction
+    data object OnDismissConfirmLeaveDialog : CreateRecordAction
 }

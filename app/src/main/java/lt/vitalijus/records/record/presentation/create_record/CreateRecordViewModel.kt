@@ -38,12 +38,10 @@ class CreateRecordViewModel : ViewModel() {
     fun onAction(action: CreateRecordAction) {
         when (action) {
             is CreateRecordAction.OnAddTopicTextChange -> onAddTopicTextChange(action.text)
-            CreateRecordAction.OnCancelClick -> TODO()
             CreateRecordAction.OnConfirmMood -> onConfirmMood()
             CreateRecordAction.OnDismissMoodSelector -> onDismissMoodSelector()
             CreateRecordAction.OnDismissTopicSuggestions -> onDismissTopicSuggestions()
             is CreateRecordAction.OnMoodClick -> onMoodClick(action)
-            CreateRecordAction.OnNavigateBackClick -> TODO()
             is CreateRecordAction.OnNoteTextChange -> TODO()
             CreateRecordAction.OnPauseAudioClick -> TODO()
             CreateRecordAction.OnPlayAudioClick -> TODO()
@@ -53,6 +51,26 @@ class CreateRecordViewModel : ViewModel() {
             is CreateRecordAction.OnTopicClick -> onTopicClick(action.topic)
             is CreateRecordAction.OnTrackSizeAvailable -> TODO()
             CreateRecordAction.OnSelectMoodClick -> onSelectMoodClick()
+            CreateRecordAction.OnDismissConfirmLeaveDialog -> onDismissConfirmLeaveDialog()
+            CreateRecordAction.OnCancelClick,
+            CreateRecordAction.OnSystemGoBackClick,
+            CreateRecordAction.OnNavigateBackClick -> onShowConfirmLeaveDialog()
+        }
+    }
+
+    private fun onShowConfirmLeaveDialog() {
+        _state.update {
+            it.copy(
+                showConfirmLeaveDialog = true
+            )
+        }
+    }
+
+    private fun onDismissConfirmLeaveDialog() {
+        _state.update {
+            it.copy(
+                showConfirmLeaveDialog = false
+            )
         }
     }
 

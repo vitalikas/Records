@@ -20,7 +20,8 @@ data class CreateRecordState(
     val playbackAmplitudes: List<Float> = List(32) { 0.3f },
     val playbackTotalDuration: Duration = Duration.ZERO,
     val playbackState: PlaybackState = PlaybackState.STOPPED,
-    val durationPlayed: Duration = Duration.ZERO
+    val durationPlayed: Duration = Duration.ZERO,
+    val showConfirmLeaveDialog: Boolean = false
 ) {
     val durationPlayedRatio = (durationPlayed / playbackTotalDuration).toFloat()
 }

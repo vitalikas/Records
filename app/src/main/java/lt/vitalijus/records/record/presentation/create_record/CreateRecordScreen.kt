@@ -2,6 +2,7 @@
 
 package lt.vitalijus.records.record.presentation.create_record
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -30,6 +32,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,7 +53,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.buttons.PrimaryButton
 import lt.vitalijus.records.core.presentation.designsystem.buttons.SecondaryButton
-import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
 import lt.vitalijus.records.core.presentation.designsystem.text_fields.TransparentHintTextField
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.secondary70
@@ -63,13 +65,15 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun CreateRecordRoot(
+    onConfirmLeave: () -> Unit,
     viewModel: CreateRecordViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     CreateRecordScreen(
         state = state,
-        onAction = viewModel::onAction
+        onAction = viewModel::onAction,
+        onConfirmLeave = onConfirmLeave
     )
 }
 
@@ -77,7 +81,14 @@ fun CreateRecordRoot(
 fun CreateRecordScreen(
     state: CreateRecordState,
     onAction: (CreateRecordAction) -> Unit,
+    onConfirmLeave: () -> Unit
 ) {
+    BackHandler(
+        enabled = !state.showConfirmLeaveDialog
+    ) {
+        onAction(CreateRecordAction.OnSystemGoBackClick)
+    }
+
     Scaffold(
         contentColor = MaterialTheme.colorScheme.surface,
         topBar = {
@@ -296,6 +307,45 @@ fun CreateRecordScreen(
                 }
             )
         }
+
+        if (state.showConfirmLeaveDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    onAction(CreateRecordAction.OnDismissConfirmLeaveDialog)
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = onConfirmLeave
+                    ) {
+                        Text(
+                            text = stringResource(R.string.discard),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            onAction(CreateRecordAction.OnDismissConfirmLeaveDialog)
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cancel)
+                        )
+                    }
+                },
+                title = {
+                    Text(
+                        text = stringResource(R.string.discard_recording)
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(R.string.this_cannot_be_undone)
+                    )
+                }
+            )
+        }
     }
 }
 
@@ -306,9 +356,11 @@ private fun CreateRecordPreview() {
         CreateRecordScreen(
             state = CreateRecordState(
                 moodUi = MoodUi.EXCITED,
-                showMoodSelector = false
+                showMoodSelector = false,
+                showConfirmLeaveDialog = false
             ),
-            onAction = {}
+            onAction = {},
+            onConfirmLeave = {}
         )
     }
 }

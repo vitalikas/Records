@@ -198,7 +198,9 @@ fun RecordScreen(
             }
         }
 
-        if (state.currentCaptureMethod == AudioCaptureMethod.STANDARD) {
+        if (state.currentCaptureMethod == AudioCaptureMethod.STANDARD &&
+            (state.recordingState == RecordingState.RECORDING || state.recordingState == RecordingState.PAUSED)
+        ) {
             RecordRecordingSheet(
                 formattedRecordDuration = state.formattedRecordDuration,
                 isRecording = state.recordingState == RecordingState.RECORDING,
