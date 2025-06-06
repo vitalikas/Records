@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,8 @@ import kotlinx.coroutines.launch
 import lt.vitalijus.records.app.navigation.NavigationRoute
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
 import lt.vitalijus.records.record.domain.recording.RecordingStorage
+import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
+import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
 import lt.vitalijus.records.record.presentation.util.toRecordDetails
 
 class CreateRecordViewModel(
@@ -67,12 +70,29 @@ class CreateRecordViewModel(
             CreateRecordAction.OnSaveClick -> onSaveClick()
             is CreateRecordAction.OnTitleTextChange -> onTitleTextChange(action.text)
             is CreateRecordAction.OnTopicClick -> onTopicClick(action.topic)
-            is CreateRecordAction.OnTrackSizeAvailable -> TODO()
+            is CreateRecordAction.OnTrackSizeAvailable -> onTrackSizeAvailable(action.trackSizeInfo)
             CreateRecordAction.OnSelectMoodClick -> onSelectMoodClick()
             CreateRecordAction.OnDismissConfirmLeaveDialog -> onDismissConfirmLeaveDialog()
             CreateRecordAction.OnCancelClick,
             CreateRecordAction.OnSystemGoBackClick,
             CreateRecordAction.OnNavigateBackClick -> onShowConfirmLeaveDialog()
+        }
+    }
+
+    private fun onTrackSizeAvailable(trackSizeInfo: TrackSizeInfo) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val finalAmplitudes = AmplitudeNormalizer.normalize(
+                sourceAmplitudes = recordingDetails.amplitudes,
+                trackWidth = trackSizeInfo.trackWidth,
+                barWidth = trackSizeInfo.barWidth,
+                spacing = trackSizeInfo.spacing
+            )
+
+            _state.update {
+                it.copy(
+                    playbackAmplitudes = finalAmplitudes
+                )
+            }
         }
     }
 
