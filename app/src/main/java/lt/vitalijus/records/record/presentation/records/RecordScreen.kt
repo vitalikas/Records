@@ -35,14 +35,14 @@ import lt.vitalijus.records.record.presentation.records.components.RecordRecordi
 import lt.vitalijus.records.record.presentation.records.components.RecordsEmptyBackground
 import lt.vitalijus.records.record.presentation.records.components.RecordsTopBar
 import lt.vitalijus.records.record.presentation.records.models.AudioCaptureMethod
-import lt.vitalijus.records.record.presentation.records.models.RecordingState
+import lt.vitalijus.records.record.presentation.records.models.RecordingType
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
 @Composable
 fun RecordsRoot(
     onNavigateToCreateRecord: (RecordingDetails) -> Unit,
-    viewModel: RecordViewModel = koinViewModel()
+    viewModel: RecordsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -199,11 +199,11 @@ fun RecordScreen(
         }
 
         if (state.currentCaptureMethod == AudioCaptureMethod.STANDARD &&
-            (state.recordingState == RecordingState.RECORDING || state.recordingState == RecordingState.PAUSED)
+            (state.recordingType == RecordingType.RECORDING || state.recordingType == RecordingType.PAUSED)
         ) {
             RecordRecordingSheet(
                 formattedRecordDuration = state.formattedRecordDuration,
-                isRecording = state.recordingState == RecordingState.RECORDING,
+                isRecording = state.recordingType == RecordingType.RECORDING,
                 onDismiss = { onAction(RecordAction.OnCancelRecording) },
                 onPauseClick = { onAction(RecordAction.OnPauseRecording) },
                 onResumeClick = { onAction(RecordAction.OnResumeRecording) },

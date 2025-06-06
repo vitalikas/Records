@@ -2,6 +2,7 @@
 
 package lt.vitalijus.records.record.presentation.create_record
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -57,6 +59,7 @@ import lt.vitalijus.records.core.presentation.designsystem.text_fields.Transpare
 import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 import lt.vitalijus.records.core.presentation.designsystem.theme.secondary70
 import lt.vitalijus.records.core.presentation.designsystem.theme.secondary95
+import lt.vitalijus.records.core.presentation.util.ObserveAsEvents
 import lt.vitalijus.records.record.presentation.components.RecordMoodPlayer
 import lt.vitalijus.records.record.presentation.create_record.components.SelectMoodSheet
 import lt.vitalijus.records.record.presentation.create_record.components.TopicsRow
@@ -69,6 +72,21 @@ fun CreateRecordRoot(
     viewModel: CreateRecordViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
+    ObserveAsEvents(viewModel.events) { event ->
+        when(event) {
+            CreateRecordEvent.FailedToSaveFile -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.error_couldnt_save_file),
+                    Toast.LENGTH_LONG
+                ).show()
+
+                onConfirmLeave()
+            }
+        }
+    }
 
     CreateRecordScreen(
         state = state,

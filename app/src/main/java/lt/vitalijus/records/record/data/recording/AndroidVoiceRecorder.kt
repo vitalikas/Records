@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import lt.vitalijus.records.record.domain.recording.RecordingDetails
+import lt.vitalijus.records.record.domain.recording.RecordingStorage
 import lt.vitalijus.records.record.domain.recording.VoiceRecorder
 import timber.log.Timber
 import java.io.File
@@ -30,8 +31,6 @@ class AndroidVoiceRecorder(
 ) : VoiceRecorder {
 
     companion object {
-        private const val TEMP_FILE_PREFIX = "temp_recording"
-        private const val TEMP_FILE_SUFFIX = ".mp4"
         private const val MAX_AMPLITUDE_VALUE = 26_000L
     }
 
@@ -118,7 +117,7 @@ class AndroidVoiceRecorder(
             _recordingDetails.update {
                 it.copy(
                     amplitudes = amplitudes.toList(),
-                    filePath = tempFile.absolutePath
+                    tempFilePath = tempFile.absolutePath
                 )
             }
             cleanup()
@@ -161,7 +160,11 @@ class AndroidVoiceRecorder(
 
     private fun generateTempFile(): File {
         val id = UUID.randomUUID().toString()
-        return File.createTempFile("${TEMP_FILE_PREFIX}_$id", TEMP_FILE_SUFFIX, context.cacheDir)
+        return File.createTempFile(
+            "${RecordingStorage.TEMP_FILE_PREFIX}_$id",
+            ".${RecordingStorage.RECORDING_FILE_EXTENSION}",
+            context.cacheDir
+        )
     }
 
     private fun startTrackingDuration() {

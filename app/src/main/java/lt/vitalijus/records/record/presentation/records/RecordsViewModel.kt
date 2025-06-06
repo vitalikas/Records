@@ -24,10 +24,10 @@ import lt.vitalijus.records.record.presentation.records.models.AudioCaptureMetho
 import lt.vitalijus.records.record.presentation.records.models.FilterItem
 import lt.vitalijus.records.record.presentation.records.models.MoodChipItemContent
 import lt.vitalijus.records.record.presentation.records.models.RecordFilterChipType
-import lt.vitalijus.records.record.presentation.records.models.RecordingState
+import lt.vitalijus.records.record.presentation.records.models.RecordingType
 import kotlin.time.Duration.Companion.seconds
 
-class RecordViewModel(
+class RecordsViewModel(
     private val voiceRecorder: AndroidVoiceRecorder
 ) : ViewModel() {
 
@@ -218,7 +218,7 @@ class RecordViewModel(
     ) {
         _state.update {
             it.copy(
-                recordingState = RecordingState.RECORDING,
+                recordingType = RecordingType.RECORDING,
                 currentCaptureMethod = captureMethod
             )
         }
@@ -246,7 +246,7 @@ class RecordViewModel(
         voiceRecorder.pause()
         _state.update {
             it.copy(
-                recordingState = RecordingState.PAUSED
+                recordingType = RecordingType.PAUSED
             )
         }
     }
@@ -255,7 +255,7 @@ class RecordViewModel(
         voiceRecorder.resume()
         _state.update {
             it.copy(
-                recordingState = RecordingState.RECORDING
+                recordingType = RecordingType.RECORDING
             )
         }
     }
@@ -264,7 +264,7 @@ class RecordViewModel(
         voiceRecorder.cancel()
         _state.update {
             it.copy(
-                recordingState = RecordingState.NOT_RECORDING,
+                recordingType = RecordingType.NOT_RECORDING,
                 currentCaptureMethod = null
             )
         }
@@ -274,7 +274,7 @@ class RecordViewModel(
         voiceRecorder.stop()
         _state.update {
             it.copy(
-                recordingState = RecordingState.NOT_RECORDING
+                recordingType = RecordingType.NOT_RECORDING
             )
         }
         val recordingDetails = voiceRecorder.recordingDetails.value

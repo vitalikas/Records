@@ -5,7 +5,7 @@ import lt.vitalijus.records.record.presentation.models.RecordUi
 import lt.vitalijus.records.record.presentation.records.models.AudioCaptureMethod
 import lt.vitalijus.records.record.presentation.records.models.FilterChip
 import lt.vitalijus.records.record.presentation.records.models.RecordDaySection
-import lt.vitalijus.records.record.presentation.records.models.RecordingState
+import lt.vitalijus.records.record.presentation.records.models.RecordingType
 import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -13,7 +13,7 @@ import kotlin.time.Duration
 data class RecordState(
     val records: Map<UiText, List<RecordUi>> = emptyMap(),
     val currentCaptureMethod: AudioCaptureMethod? = null,
-    val recordingState: RecordingState = RecordingState.NOT_RECORDING,
+    val recordingType: RecordingType = RecordingType.NOT_RECORDING,
     val recordingElapsedDuration: Duration = Duration.ZERO,
     val moodFilterChipData: FilterChip.MoodFilterChip = FilterChip.MoodFilterChip(),
     val topicFilterChipData: FilterChip.TopicFilterChip = FilterChip.TopicFilterChip(),

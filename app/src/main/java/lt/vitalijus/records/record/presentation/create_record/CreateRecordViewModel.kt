@@ -2,9 +2,12 @@
 
 package lt.vitalijus.records.record.presentation.create_record
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
@@ -13,13 +16,28 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import lt.vitalijus.records.app.navigation.NavigationRoute
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
+import lt.vitalijus.records.record.domain.recording.RecordingStorage
+import lt.vitalijus.records.record.presentation.util.toRecordDetails
 
-class CreateRecordViewModel : ViewModel() {
+class CreateRecordViewModel(
+    private val savedStateHandle: SavedStateHandle,
+    private val recordingStorage: RecordingStorage
+) : ViewModel() {
 
     private var hasLoadedInitialData = false
+
+    // Getting the navigation arguments
+    private val route = savedStateHandle.toRoute<NavigationRoute.CreateRecord>()
+    private val recordingDetails = route.toRecordDetails()
+
+    private val eventChannel = Channel<CreateRecordEvent>()
+    val events = eventChannel.receiveAsFlow()
 
     private val _state = MutableStateFlow(CreateRecordState())
     val state = _state
@@ -42,12 +60,12 @@ class CreateRecordViewModel : ViewModel() {
             CreateRecordAction.OnDismissMoodSelector -> onDismissMoodSelector()
             CreateRecordAction.OnDismissTopicSuggestions -> onDismissTopicSuggestions()
             is CreateRecordAction.OnMoodClick -> onMoodClick(action)
-            is CreateRecordAction.OnNoteTextChange -> TODO()
+            is CreateRecordAction.OnNoteTextChange -> {}
             CreateRecordAction.OnPauseAudioClick -> TODO()
             CreateRecordAction.OnPlayAudioClick -> TODO()
             is CreateRecordAction.OnRemoveTopicClick -> onRemoveTopicClick(action.topic)
-            CreateRecordAction.OnSaveClick -> TODO()
-            is CreateRecordAction.OnTitleTextChange -> TODO()
+            CreateRecordAction.OnSaveClick -> onSaveClick()
+            is CreateRecordAction.OnTitleTextChange -> onTitleTextChange(action.text)
             is CreateRecordAction.OnTopicClick -> onTopicClick(action.topic)
             is CreateRecordAction.OnTrackSizeAvailable -> TODO()
             CreateRecordAction.OnSelectMoodClick -> onSelectMoodClick()
@@ -55,6 +73,33 @@ class CreateRecordViewModel : ViewModel() {
             CreateRecordAction.OnCancelClick,
             CreateRecordAction.OnSystemGoBackClick,
             CreateRecordAction.OnNavigateBackClick -> onShowConfirmLeaveDialog()
+        }
+    }
+
+    private fun onTitleTextChange(text: String) {
+        _state.update {
+            it.copy(
+                titleText = text,
+                canSaveRecord = text.isNotBlank()
+            )
+        }
+    }
+
+    private fun onSaveClick() {
+        if (recordingDetails.tempFilePath == null) {
+            return
+        }
+
+        viewModelScope.launch {
+            val persistentFilePath = recordingStorage.savePersistently(
+                tempFilePath = recordingDetails.tempFilePath
+            )
+            if (persistentFilePath == null) {
+                eventChannel.send(CreateRecordEvent.FailedToSaveFile)
+                return@launch
+            }
+
+            // TODO: Save record to database
         }
     }
 

@@ -1,6 +1,6 @@
 package lt.vitalijus.records.record.presentation.records.models
 
-enum class RecordingState {
+enum class RecordingType {
 
     RECORDING,
     NOT_RECORDING,
