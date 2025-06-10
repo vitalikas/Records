@@ -262,7 +262,7 @@ fun CreateRecordScreen(
                 TransparentHintTextField(
                     text = state.noteText,
                     onValueChange = {
-                        onAction(CreateRecordAction.OnAddDescriptionTextChange(it))
+                        onAction(CreateRecordAction.OnAddNoteTextChange(it))
                     },
                     modifier = Modifier
                         .weight(1f)

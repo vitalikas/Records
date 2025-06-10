@@ -26,6 +26,7 @@ import lt.vitalijus.records.app.navigation.NavigationRoute
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
 import lt.vitalijus.records.record.domain.audio.AudioPlayer
 import lt.vitalijus.records.record.domain.recording.RecordingStorage
+import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
@@ -47,8 +48,21 @@ class CreateRecordViewModel(
     private val eventChannel = Channel<CreateRecordEvent>()
     val events = eventChannel.receiveAsFlow()
 
+    private val restoredTopics = savedStateHandle.get<String>("topics")
+        ?.split(",")
+        ?: emptyList()
     private val _state = MutableStateFlow(
-        CreateRecordState(playbackTotalDuration = recordingDetails.duration)
+        CreateRecordState(
+            playbackTotalDuration = recordingDetails.duration,
+            titleText = savedStateHandle["titleText"] ?: "",
+            noteText = savedStateHandle["noteText"] ?: "",
+            topics = restoredTopics,
+            moodUi = savedStateHandle.get<String>("mood")?.let {
+                MoodUi.valueOf(it)
+            },
+            showMoodSelector = savedStateHandle.get<String>("mood") == null,
+            canSaveRecord = savedStateHandle.get<Boolean>("canSaveRecord") ?: false
+        )
     )
     val state = _state
         .onStart {
@@ -56,6 +70,13 @@ class CreateRecordViewModel(
                 observeAddTopicText()
                 hasLoadedInitialData = true
             }
+        }
+        .onEach { state ->
+            savedStateHandle["titleText"] = state.titleText
+            savedStateHandle["noteText"] = state.noteText
+            savedStateHandle["topics"] = state.topics.joinToString(",")
+            savedStateHandle["mood"] = state.moodUi?.name
+            savedStateHandle["canSaveRecord"] = state.canSaveRecord
         }
         .stateIn(
             scope = viewModelScope,
@@ -72,7 +93,7 @@ class CreateRecordViewModel(
             CreateRecordAction.OnDismissMoodSelector -> onDismissMoodSelector()
             CreateRecordAction.OnDismissTopicSuggestions -> onDismissTopicSuggestions()
             is CreateRecordAction.OnMoodClick -> onMoodClick(action)
-            is CreateRecordAction.OnAddDescriptionTextChange -> {}
+            is CreateRecordAction.OnAddNoteTextChange -> onAddNoteTextChange(action.text)
             CreateRecordAction.OnPauseAudioClick -> onPauseAudioClick()
             CreateRecordAction.OnPlayAudioClick -> onPlayAudioClick()
             is CreateRecordAction.OnRemoveTopicClick -> onRemoveTopicClick(action.topic)
@@ -84,6 +105,14 @@ class CreateRecordViewModel(
             CreateRecordAction.OnCancelClick,
             CreateRecordAction.OnSystemGoBackClick,
             CreateRecordAction.OnNavigateBackClick -> onShowConfirmLeaveDialog()
+        }
+    }
+
+    private fun onAddNoteTextChange(text: String) {
+        _state.update {
+            it.copy(
+                noteText = text
+            )
         }
     }
 
@@ -122,7 +151,6 @@ class CreateRecordViewModel(
                 .onEach { track ->
                     _state.update {
                         it.copy(
-                            playbackTotalDuration = track.totalDuration,
                             durationPlayed = track.durationPlayed,
                             playbackState = if (track.isPlaying) {
                                 PlaybackState.PLAYING
@@ -161,7 +189,7 @@ class CreateRecordViewModel(
         _state.update {
             it.copy(
                 titleText = text,
-                canSaveRecord = text.isNotBlank()
+                canSaveRecord = text.isNotBlank() && it.moodUi != null
             )
         }
     }

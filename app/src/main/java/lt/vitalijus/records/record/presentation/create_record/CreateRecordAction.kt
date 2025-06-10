@@ -7,7 +7,7 @@ sealed interface CreateRecordAction {
     data object OnNavigateBackClick : CreateRecordAction
     data class OnAddTitleTextChange(val text: String) : CreateRecordAction
     data class OnAddTopicTextChange(val text: String) : CreateRecordAction
-    data class OnAddDescriptionTextChange(val text: String) : CreateRecordAction
+    data class OnAddNoteTextChange(val text: String) : CreateRecordAction
     data object OnSelectMoodClick : CreateRecordAction
     data object OnDismissMoodSelector : CreateRecordAction
     data class OnMoodClick(val moodUi: MoodUi) : CreateRecordAction
