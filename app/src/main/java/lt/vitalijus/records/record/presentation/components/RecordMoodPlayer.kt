@@ -101,8 +101,8 @@ fun RecordMoodPlayer(
                 modifier = Modifier
                     .weight(1f)
                     .padding(
-                        vertical = 10.dp,
-                        horizontal = 8.dp
+                        vertical = 8.dp,
+                        horizontal = 16.dp
                     )
                     .fillMaxHeight()
                     .onSizeChanged {
@@ -124,7 +124,9 @@ fun RecordMoodPlayer(
 
             Text(
                 text = formattedDurationText,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontFeatureSettings = "tnum"
+                ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .padding(end = 8.dp)

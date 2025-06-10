@@ -75,7 +75,7 @@ fun CreateRecordRoot(
 
     val context = LocalContext.current
     ObserveAsEvents(viewModel.events) { event ->
-        when(event) {
+        when (event) {
             CreateRecordEvent.FailedToSaveFile -> {
                 Toast.makeText(
                     context,
@@ -85,12 +85,15 @@ fun CreateRecordRoot(
 
                 onConfirmLeave()
             }
+
+            is CreateRecordEvent.OnTrackSizeAvailable -> Unit
         }
     }
 
     CreateRecordScreen(
         state = state,
         onAction = viewModel::onAction,
+        onEvent = viewModel::onEvent,
         onConfirmLeave = onConfirmLeave
     )
 }
@@ -99,6 +102,7 @@ fun CreateRecordRoot(
 fun CreateRecordScreen(
     state: CreateRecordState,
     onAction: (CreateRecordAction) -> Unit,
+    onEvent: (CreateRecordEvent) -> Unit,
     onConfirmLeave: () -> Unit
 ) {
     BackHandler(
@@ -183,7 +187,7 @@ fun CreateRecordScreen(
                 TransparentHintTextField(
                     text = state.titleText,
                     onValueChange = {
-                        onAction(CreateRecordAction.OnTitleTextChange(it))
+                        onAction(CreateRecordAction.OnAddTitleTextChange(it))
                     },
                     modifier = Modifier
                         .weight(1f),
@@ -217,7 +221,7 @@ fun CreateRecordScreen(
                     onAction(CreateRecordAction.OnPauseAudioClick)
                 },
                 onTrackSizeAvailable = {
-                    onAction(CreateRecordAction.OnTrackSizeAvailable(it))
+                    onEvent(CreateRecordEvent.OnTrackSizeAvailable(it))
                 }
             )
 
@@ -258,7 +262,7 @@ fun CreateRecordScreen(
                 TransparentHintTextField(
                     text = state.noteText,
                     onValueChange = {
-                        onAction(CreateRecordAction.OnNoteTextChange(it))
+                        onAction(CreateRecordAction.OnAddDescriptionTextChange(it))
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -378,6 +382,7 @@ private fun CreateRecordPreview() {
                 showConfirmLeaveDialog = false
             ),
             onAction = {},
+            onEvent = {},
             onConfirmLeave = {}
         )
     }

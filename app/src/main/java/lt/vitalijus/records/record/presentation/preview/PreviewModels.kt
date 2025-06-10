@@ -21,6 +21,7 @@ data object PreviewModels {
         },
         topics = listOf("Love", "Work"),
         amplitudes = (1..30).map { Random.nextFloat() },
+        audioFilePath = "",
         playbackTotalDuration = 250.seconds,
         playbackCurrentDuration = 120.seconds,
         playbackState = PlaybackState.PAUSED

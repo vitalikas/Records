@@ -19,16 +19,19 @@ import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
 import lt.vitalijus.records.core.presentation.util.UiText
 import lt.vitalijus.records.record.data.recording.AndroidVoiceRecorder
+import lt.vitalijus.records.record.domain.audio.AudioPlayer
 import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.records.models.AudioCaptureMethod
 import lt.vitalijus.records.record.presentation.records.models.FilterItem
 import lt.vitalijus.records.record.presentation.records.models.MoodChipItemContent
 import lt.vitalijus.records.record.presentation.records.models.RecordFilterChipType
 import lt.vitalijus.records.record.presentation.records.models.RecordingType
+import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
 
 class RecordsViewModel(
-    private val voiceRecorder: AndroidVoiceRecorder
+    private val voiceRecorder: AndroidVoiceRecorder,
+    private val audioPlayer: AudioPlayer
 ) : ViewModel() {
 
     companion object {
@@ -37,7 +40,10 @@ class RecordsViewModel(
 
     private var hasLoadedInitialData = false
 
+    private val playingRecordId = MutableStateFlow<Int?>(null)
+
     private val selectedMoodFilters = MutableStateFlow<List<MoodUi>>(emptyList())
+
     private val selectedTopicFilters = MutableStateFlow<List<String>>(emptyList())
 
     private val eventChannel = Channel<RecordEvent>()
@@ -136,40 +142,65 @@ class RecordsViewModel(
                 }
             }
 
-            is RecordAction.OnPlayAudioClick -> {
+            is RecordAction.OnPlayAudioClick -> onPlayAudioClick(action.recordId)
 
-            }
-
-            RecordAction.OnPauseAudioClick -> {
-
-            }
+            RecordAction.OnPauseAudioClick -> onPauseAudioClick()
 
             is RecordAction.OnTrackSizeAvailable -> {
 
             }
 
-            RecordAction.OnCancelRecording -> {
-                cancelRecording()
-            }
+            RecordAction.OnCancelRecording -> cancelRecording()
 
-            RecordAction.OnCompleteRecording -> {
-                stopRecording()
-            }
+            RecordAction.OnCompleteRecording -> stopRecording()
 
-            RecordAction.OnPauseRecording -> {
-                pauseRecording()
-            }
+            RecordAction.OnPauseRecording -> pauseRecording()
 
-            RecordAction.OnResumeRecording -> {
-                resumeRecording()
-            }
+            RecordAction.OnResumeRecording -> resumeRecording()
 
-            RecordAction.OnRecordButtonLongClick -> {
-                startRecording(
-                    captureMethod = AudioCaptureMethod.QUICK
+            RecordAction.OnRecordButtonLongClick -> startRecording(captureMethod = AudioCaptureMethod.QUICK)
+        }
+    }
+
+    private fun onPauseAudioClick() {
+        audioPlayer.pause()
+    }
+
+    private fun onPlayAudioClick(recordId: Int) {
+        val selectedRecord = state.value.records.values.flatten().first { it.id == recordId }
+        val activeTrack = audioPlayer.activeTrack.value
+        val isNewRecord = playingRecordId.value != recordId
+        val isSameRecordFromBeginning =
+            playingRecordId.value == recordId && activeTrack.durationPlayed == ZERO
+
+        when {
+            isNewRecord || isSameRecordFromBeginning -> {
+                playingRecordId.update { recordId }
+                audioPlayer.stop()
+                audioPlayer.play(
+                    filePath = selectedRecord.audioFilePath,
+                    onComplete = ::completePlayback
                 )
             }
+
+            else -> audioPlayer.resume()
         }
+    }
+
+    private fun completePlayback() {
+        _state.update {
+            it.copy(
+                records = it.records.mapValues { (_, records) ->
+                    records.map { record ->
+                        record.copy(
+                            playbackCurrentDuration = ZERO
+                        )
+                    }
+                }
+            )
+        }
+
+        playingRecordId.update { null }
     }
 
     fun onEvent(event: RecordEvent) {

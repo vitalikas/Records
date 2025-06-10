@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,14 +24,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import lt.vitalijus.records.app.navigation.NavigationRoute
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
+import lt.vitalijus.records.record.domain.audio.AudioPlayer
 import lt.vitalijus.records.record.domain.recording.RecordingStorage
+import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
 import lt.vitalijus.records.record.presentation.util.toRecordDetails
+import kotlin.time.Duration
 
 class CreateRecordViewModel(
-    private val savedStateHandle: SavedStateHandle,
-    private val recordingStorage: RecordingStorage
+    savedStateHandle: SavedStateHandle,
+    private val recordingStorage: RecordingStorage,
+    private val audioPlayer: AudioPlayer
 ) : ViewModel() {
 
     private var hasLoadedInitialData = false
@@ -42,7 +47,9 @@ class CreateRecordViewModel(
     private val eventChannel = Channel<CreateRecordEvent>()
     val events = eventChannel.receiveAsFlow()
 
-    private val _state = MutableStateFlow(CreateRecordState())
+    private val _state = MutableStateFlow(
+        CreateRecordState(playbackTotalDuration = recordingDetails.duration)
+    )
     val state = _state
         .onStart {
             if (!hasLoadedInitialData) {
@@ -56,6 +63,8 @@ class CreateRecordViewModel(
             initialValue = CreateRecordState()
         )
 
+    private var durationJob: Job? = null
+
     fun onAction(action: CreateRecordAction) {
         when (action) {
             is CreateRecordAction.OnAddTopicTextChange -> onAddTopicTextChange(action.text)
@@ -63,20 +72,72 @@ class CreateRecordViewModel(
             CreateRecordAction.OnDismissMoodSelector -> onDismissMoodSelector()
             CreateRecordAction.OnDismissTopicSuggestions -> onDismissTopicSuggestions()
             is CreateRecordAction.OnMoodClick -> onMoodClick(action)
-            is CreateRecordAction.OnNoteTextChange -> {}
-            CreateRecordAction.OnPauseAudioClick -> TODO()
-            CreateRecordAction.OnPlayAudioClick -> TODO()
+            is CreateRecordAction.OnAddDescriptionTextChange -> {}
+            CreateRecordAction.OnPauseAudioClick -> onPauseAudioClick()
+            CreateRecordAction.OnPlayAudioClick -> onPlayAudioClick()
             is CreateRecordAction.OnRemoveTopicClick -> onRemoveTopicClick(action.topic)
             CreateRecordAction.OnSaveClick -> onSaveClick()
-            is CreateRecordAction.OnTitleTextChange -> onTitleTextChange(action.text)
+            is CreateRecordAction.OnAddTitleTextChange -> onTitleTextChange(action.text)
             is CreateRecordAction.OnTopicClick -> onTopicClick(action.topic)
-            is CreateRecordAction.OnTrackSizeAvailable -> onTrackSizeAvailable(action.trackSizeInfo)
             CreateRecordAction.OnSelectMoodClick -> onSelectMoodClick()
             CreateRecordAction.OnDismissConfirmLeaveDialog -> onDismissConfirmLeaveDialog()
             CreateRecordAction.OnCancelClick,
             CreateRecordAction.OnSystemGoBackClick,
             CreateRecordAction.OnNavigateBackClick -> onShowConfirmLeaveDialog()
         }
+    }
+
+    fun onEvent(event: CreateRecordEvent) {
+        when (event) {
+            is CreateRecordEvent.OnTrackSizeAvailable -> onTrackSizeAvailable(event.trackSizeInfo)
+            CreateRecordEvent.FailedToSaveFile -> onFailedToSaveFile()
+        }
+    }
+
+    private fun onFailedToSaveFile() {
+        viewModelScope.launch {
+            eventChannel.send(CreateRecordEvent.FailedToSaveFile)
+        }
+    }
+
+    private fun onPlayAudioClick() {
+        if (state.value.playbackState == PlaybackState.PAUSED) {
+            audioPlayer.resume()
+        } else {
+            audioPlayer.play(
+                filePath = recordingDetails.tempFilePath
+                    ?: throw IllegalArgumentException("Temp file path is null."),
+                onComplete = {
+                    _state.update {
+                        it.copy(
+                            playbackState = PlaybackState.STOPPED,
+                            durationPlayed = Duration.ZERO
+                        )
+                    }
+                }
+            )
+
+            durationJob = audioPlayer
+                .activeTrack
+                .onEach { track ->
+                    _state.update {
+                        it.copy(
+                            playbackTotalDuration = track.totalDuration,
+                            durationPlayed = track.durationPlayed,
+                            playbackState = if (track.isPlaying) {
+                                PlaybackState.PLAYING
+                            } else {
+                                PlaybackState.PAUSED
+                            }
+                        )
+                    }
+                }
+                .launchIn(viewModelScope)
+        }
+    }
+
+    private fun onPauseAudioClick() {
+        audioPlayer.pause()
     }
 
     private fun onTrackSizeAvailable(trackSizeInfo: TrackSizeInfo) {
@@ -115,7 +176,7 @@ class CreateRecordViewModel(
                 tempFilePath = recordingDetails.tempFilePath
             )
             if (persistentFilePath == null) {
-                eventChannel.send(CreateRecordEvent.FailedToSaveFile)
+                onFailedToSaveFile()
                 return@launch
             }
 

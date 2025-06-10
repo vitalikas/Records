@@ -1,7 +1,9 @@
 package lt.vitalijus.records.record.di
 
+import lt.vitalijus.records.record.data.audio.AndroidAudioPlayer
 import lt.vitalijus.records.record.data.recording.AndroidVoiceRecorder
 import lt.vitalijus.records.record.data.recording.InternalRecordingStorage
+import lt.vitalijus.records.record.domain.audio.AudioPlayer
 import lt.vitalijus.records.record.domain.recording.RecordingStorage
 import lt.vitalijus.records.record.domain.recording.VoiceRecorder
 import lt.vitalijus.records.record.presentation.create_record.CreateRecordViewModel
@@ -26,4 +28,6 @@ val recordsModule = module {
     viewModelOf(::CreateRecordViewModel)
 
     singleOf(::InternalRecordingStorage) bind RecordingStorage::class
+
+    singleOf(::AndroidAudioPlayer) bind AudioPlayer::class
 }
