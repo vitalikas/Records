@@ -159,6 +159,8 @@ class RecordsViewModel(
             RecordAction.OnResumeRecording -> resumeRecording()
 
             RecordAction.OnRecordButtonLongClick -> startRecording(captureMethod = AudioCaptureMethod.QUICK)
+
+            is RecordAction.OnSeekAudio -> {}
         }
     }
 

@@ -34,6 +34,7 @@ fun RecordTimelineItem(
     relativePosition: RelativePosition,
     onPlayClick: () -> Unit,
     onPauseClick: () -> Unit,
+    onSeekAudio: (Float) -> Unit,
     onTrackSizeAvailable: (TrackSizeInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -75,6 +76,7 @@ fun RecordTimelineItem(
             recordUi = recordUi,
             onPlayClick = onPlayClick,
             onPauseClick = onPauseClick,
+            onSeekAudio = onSeekAudio,
             onTrackSizeAvailable = onTrackSizeAvailable,
             modifier = Modifier
                 .padding(vertical = 8.dp)
@@ -91,6 +93,7 @@ private fun RecordTimelineItemPreview() {
             relativePosition = RelativePosition.IN_BETWEEN,
             onPlayClick = {},
             onPauseClick = {},
+            onSeekAudio = {},
             onTrackSizeAvailable = {},
             modifier = Modifier
                 .fillMaxWidth()

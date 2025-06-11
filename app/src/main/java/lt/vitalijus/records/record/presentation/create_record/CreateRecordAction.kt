@@ -19,6 +19,7 @@ sealed interface CreateRecordAction {
     data object OnSaveClick : CreateRecordAction
     data object OnPlayAudioClick : CreateRecordAction
     data object OnPauseAudioClick : CreateRecordAction
+    data class OnSeekAudio(val progress: Float) : CreateRecordAction
     data object OnSystemGoBackClick : CreateRecordAction
     data object OnDismissConfirmLeaveDialog : CreateRecordAction
 }

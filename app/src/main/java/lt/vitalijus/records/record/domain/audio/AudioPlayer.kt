@@ -9,4 +9,5 @@ interface AudioPlayer {
     fun pause()
     fun resume()
     fun stop()
+    fun seekTo(filePath: String, onComplete: () -> Unit, progress: Float)
 }

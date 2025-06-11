@@ -33,6 +33,7 @@ fun RecordCard(
     onTrackSizeAvailable: (TrackSizeInfo) -> Unit,
     onPlayClick: () -> Unit,
     onPauseClick: () -> Unit,
+    onSeekAudio: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -67,12 +68,13 @@ fun RecordCard(
             RecordMoodPlayer(
                 moodUi = recordUi.mood,
                 playbackState = recordUi.playbackState,
-                playerProgress = { recordUi.playbackRatio },
+                playerProgress = recordUi.playbackRatio,
                 durationPlayed = recordUi.playbackCurrentDuration,
                 totalPlaybackDuration = recordUi.playbackTotalDuration,
                 powerRatios = recordUi.amplitudes,
                 onPlayClick = onPlayClick,
                 onPauseClick = onPauseClick,
+                onSeekAudio = onSeekAudio,
                 onTrackSizeAvailable = onTrackSizeAvailable
             )
 
@@ -101,7 +103,8 @@ private fun RecordCardPreview() {
             ),
             onTrackSizeAvailable = {},
             onPlayClick = {},
-            onPauseClick = {}
+            onPauseClick = {},
+            onSeekAudio = {}
         )
     }
 }

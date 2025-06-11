@@ -36,12 +36,13 @@ import kotlin.time.Duration.Companion.seconds
 fun RecordMoodPlayer(
     moodUi: MoodUi?,
     playbackState: PlaybackState,
-    playerProgress: () -> Float,
+    playerProgress: Float,
     durationPlayed: Duration,
     totalPlaybackDuration: Duration,
     powerRatios: List<Float>,
     onPlayClick: () -> Unit,
     onPauseClick: () -> Unit,
+    onSeekAudio: (progress: Float) -> Unit,
     modifier: Modifier = Modifier,
     amplitudeBarWidth: Dp = 5.dp,
     amplitudeBarSpacing: Dp = 4.dp,
@@ -98,6 +99,7 @@ fun RecordMoodPlayer(
                 trackColor = trackColor,
                 trackFillColor = trackFillColor,
                 playerProgress = playerProgress,
+                onSeek = onSeekAudio,
                 modifier = Modifier
                     .weight(1f)
                     .padding(
@@ -148,13 +150,14 @@ private fun RecordMoodPlayerPreview() {
         RecordMoodPlayer(
             moodUi = MoodUi.NEUTRAL,
             playbackState = PlaybackState.PAUSED,
-            playerProgress = { 0.27f },
+            playerProgress = 0.27f,
             durationPlayed = 125.seconds,
             totalPlaybackDuration = 250.seconds,
             powerRatios = ratios,
             onTrackSizeAvailable = {},
             onPlayClick = {},
             onPauseClick = {},
+            onSeekAudio = {},
             modifier = Modifier
                 .fillMaxWidth()
         )

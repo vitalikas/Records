@@ -210,7 +210,7 @@ fun CreateRecordScreen(
             RecordMoodPlayer(
                 moodUi = state.moodUi,
                 playbackState = state.playbackState,
-                playerProgress = { state.durationPlayedRatio },
+                playerProgress = state.durationPlayedRatio,
                 durationPlayed = state.durationPlayed,
                 totalPlaybackDuration = state.playbackTotalDuration,
                 powerRatios = state.playbackAmplitudes,
@@ -219,6 +219,9 @@ fun CreateRecordScreen(
                 },
                 onPauseClick = {
                     onAction(CreateRecordAction.OnPauseAudioClick)
+                },
+                onSeekAudio = {
+                    onAction(CreateRecordAction.OnSeekAudio(it))
                 },
                 onTrackSizeAvailable = {
                     onEvent(CreateRecordEvent.OnTrackSizeAvailable(it))

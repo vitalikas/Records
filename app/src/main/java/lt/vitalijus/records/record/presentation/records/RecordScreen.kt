@@ -28,6 +28,7 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.bgGradient
 import lt.vitalijus.records.core.presentation.util.ObserveAsEvents
 import lt.vitalijus.records.core.presentation.util.isAppInForeground
 import lt.vitalijus.records.record.domain.recording.RecordingDetails
+import lt.vitalijus.records.record.presentation.create_record.CreateRecordAction
 import lt.vitalijus.records.record.presentation.records.components.RecordDraggableFloatingActionButton
 import lt.vitalijus.records.record.presentation.records.components.RecordFilterRow
 import lt.vitalijus.records.record.presentation.records.components.RecordList
@@ -189,6 +190,9 @@ fun RecordScreen(
                         },
                         onPauseClick = {
                             onAction(RecordAction.OnPauseAudioClick)
+                        },
+                        onSeekAudio = {
+                            onAction(RecordAction.OnSeekAudio(it))
                         },
                         onTrackSizeAvailable = { trackSizeInfo ->
                             onAction(RecordAction.OnTrackSizeAvailable(trackSizeInfo))

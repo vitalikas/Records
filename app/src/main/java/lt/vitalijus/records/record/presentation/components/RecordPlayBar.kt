@@ -1,6 +1,7 @@
 package lt.vitalijus.records.record.presentation.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -14,6 +15,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -28,11 +30,20 @@ fun RecordPlayBar(
     powerRatios: List<Float>,
     trackColor: Color,
     trackFillColor: Color,
-    playerProgress: () -> Float,
+    playerProgress: Float,
+    onSeek: (progress: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Canvas(
         modifier = modifier
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { offset ->
+                        val progress = (offset.x / size.width).coerceIn(0f, 1f)
+                        onSeek(progress)
+                    }
+                )
+            }
     ) {
         val amplitudeBarWidthPx = amplitudeBarWidth.toPx()
         val amplitudeBarSpacingPx = amplitudeBarSpacing.toPx()
@@ -75,7 +86,7 @@ fun RecordPlayBar(
             drawRect(
                 color = trackFillColor,
                 size = Size(
-                    width = size.width * playerProgress(),
+                    width = size.width * playerProgress,
                     height = size.height
                 )
             )
@@ -98,7 +109,8 @@ private fun RecordPlayBarPreview() {
             powerRatios = ratios,
             trackColor = MoodUi.SAD.colorSet.desaturated,
             trackFillColor = MoodUi.SAD.colorSet.vivid,
-            playerProgress = { 0.27f },
+            playerProgress = 0.23f,
+            onSeek = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)

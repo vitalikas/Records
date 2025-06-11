@@ -20,7 +20,9 @@ class AndroidAudioPlayer(
     private val applicationScope: CoroutineScope
 ) : AudioPlayer {
 
+    private var currentFilePath: String? = null
     private var mediaPlayer: MediaPlayer? = null
+    private var isMediaPlayerPrepared: Boolean = false
 
     private val _activeTrack = MutableStateFlow(AudioTrack())
     override val activeTrack
@@ -32,30 +34,33 @@ class AndroidAudioPlayer(
         filePath: String,
         onComplete: () -> Unit
     ) {
-        mediaPlayer = MediaPlayer().apply {
-            val fileInputStream = FileInputStream(File(filePath))
+        val shouldInitializeNewPlayer =
+            mediaPlayer == null || filePath != currentFilePath || !isMediaPlayerPrepared
+
+        if (shouldInitializeNewPlayer) {
+            stop()
+            initMediaPlayer(
+                filePath = filePath,
+                onComplete = onComplete
+            )
+        }
+
+        mediaPlayer?.let { player ->
             try {
-                setDataSource(fileInputStream.fd)
-
-                prepare()
-                start()
-
+                player.start()
                 _activeTrack.update {
-                    AudioTrack(
+                    it.copy(
                         isPlaying = true
                     )
                 }
-
                 trackDuration()
-
-                setOnCompletionListener {
-                    onComplete()
-                    stop()
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "Error starting MediaPlayer, possibly in a bad state.")
+                _activeTrack.update {
+                    it.copy(
+                        isPlaying = false
+                    )
                 }
-            } catch (e: Exception) {
-                Timber.e(e, "Error playing audio.")
-            } finally {
-                fileInputStream.close()
             }
         }
     }
@@ -76,7 +81,7 @@ class AndroidAudioPlayer(
     }
 
     override fun resume() {
-        if (activeTrack.value.isPlaying) {
+        if (activeTrack.value.isPlaying || !isMediaPlayerPrepared) {
             return
         }
 
@@ -99,11 +104,91 @@ class AndroidAudioPlayer(
         }
         durationJob?.cancel()
         mediaPlayer?.apply {
-            stop()
-            reset()
-            release()
+            try {
+                if (isPlaying) stop()
+                reset()
+                release()
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "An error occurred during MediaPlayer stop/reset/release.")
+            }
         }
         mediaPlayer = null
+        isMediaPlayerPrepared = false
+        currentFilePath = null
+    }
+
+    override fun seekTo(
+        filePath: String,
+        onComplete: () -> Unit,
+        progress: Float
+    ) {
+        val shouldInitializeNewPlayer =
+            mediaPlayer == null || filePath != currentFilePath || !isMediaPlayerPrepared
+
+        if (shouldInitializeNewPlayer) {
+            stop()
+            initMediaPlayer(
+                filePath = filePath,
+                onComplete = onComplete
+            )
+        }
+
+        mediaPlayer?.let { player ->
+            if (isMediaPlayerPrepared) {
+                val targetPosition = (player.duration * progress).toInt().coerceAtLeast(0)
+                player.seekTo(targetPosition)
+
+                _activeTrack.update {
+                    it.copy(
+                        durationPlayed = targetPosition.milliseconds
+                    )
+                }
+            } else {
+                Timber.w("MediaPlayer not prepared, cannot seek.")
+            }
+        } ?: run {
+            Timber.w("MediaPlayer not initialised, cannot seek.")
+        }
+    }
+
+    private fun initMediaPlayer(
+        filePath: String,
+        onComplete: () -> Unit
+    ) {
+        mediaPlayer = MediaPlayer().apply {
+            var fileInputStream: FileInputStream? = null
+            try {
+                fileInputStream = FileInputStream(File(filePath))
+                setDataSource(fileInputStream.fd)
+                currentFilePath = filePath
+
+                prepare()
+                isMediaPlayerPrepared = true
+
+                setOnCompletionListener {
+                    isMediaPlayerPrepared = false
+                    onComplete()
+                    stop()
+                }
+
+                setOnErrorListener { mp, what, extra ->
+                    Timber.e("MediaPlayer $mp error: what=$what, extra=$extra for $currentFilePath")
+                    isMediaPlayerPrepared = false
+                    _activeTrack.update {
+                        it.copy(
+                            isPlaying = false
+                        )
+                    }
+                    true
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error playing audio.")
+                isMediaPlayerPrepared = false
+                currentFilePath = null
+            } finally {
+                fileInputStream?.close()
+            }
+        }
     }
 
     private fun trackDuration() {

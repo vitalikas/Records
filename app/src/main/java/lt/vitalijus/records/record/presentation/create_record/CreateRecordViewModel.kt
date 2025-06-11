@@ -31,10 +31,11 @@ import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
 import lt.vitalijus.records.record.presentation.util.toRecordDetails
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.milliseconds
 
 class CreateRecordViewModel(
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     private val recordingStorage: RecordingStorage,
     private val audioPlayer: AudioPlayer
 ) : ViewModel() {
@@ -53,7 +54,8 @@ class CreateRecordViewModel(
         ?: emptyList()
     private val _state = MutableStateFlow(
         CreateRecordState(
-            playbackTotalDuration = recordingDetails.duration,
+            playbackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")?.milliseconds
+                ?: recordingDetails.duration,
             titleText = savedStateHandle["titleText"] ?: "",
             noteText = savedStateHandle["noteText"] ?: "",
             topics = restoredTopics,
@@ -61,7 +63,8 @@ class CreateRecordViewModel(
                 MoodUi.valueOf(it)
             },
             showMoodSelector = savedStateHandle.get<String>("mood") == null,
-            canSaveRecord = savedStateHandle.get<Boolean>("canSaveRecord") ?: false
+            canSaveRecord = savedStateHandle.get<Boolean>("canSaveRecord") ?: false,
+            durationPlayed = savedStateHandle.get<Long>("durationPlayed")?.milliseconds ?: ZERO,
         )
     )
     val state = _state
@@ -77,6 +80,9 @@ class CreateRecordViewModel(
             savedStateHandle["topics"] = state.topics.joinToString(",")
             savedStateHandle["mood"] = state.moodUi?.name
             savedStateHandle["canSaveRecord"] = state.canSaveRecord
+            savedStateHandle["durationPlayed"] = state.durationPlayed.inWholeMilliseconds
+            savedStateHandle["playbackTotalDuration"] =
+                state.playbackTotalDuration.inWholeMilliseconds
         }
         .stateIn(
             scope = viewModelScope,
@@ -96,6 +102,7 @@ class CreateRecordViewModel(
             is CreateRecordAction.OnAddNoteTextChange -> onAddNoteTextChange(action.text)
             CreateRecordAction.OnPauseAudioClick -> onPauseAudioClick()
             CreateRecordAction.OnPlayAudioClick -> onPlayAudioClick()
+            is CreateRecordAction.OnSeekAudio -> onSeekAudio(action.progress)
             is CreateRecordAction.OnRemoveTopicClick -> onRemoveTopicClick(action.topic)
             CreateRecordAction.OnSaveClick -> onSaveClick()
             is CreateRecordAction.OnAddTitleTextChange -> onTitleTextChange(action.text)
@@ -108,18 +115,18 @@ class CreateRecordViewModel(
         }
     }
 
+    fun onEvent(event: CreateRecordEvent) {
+        when (event) {
+            is CreateRecordEvent.OnTrackSizeAvailable -> onTrackSizeAvailable(event.trackSizeInfo)
+            CreateRecordEvent.FailedToSaveFile -> onFailedToSaveFile()
+        }
+    }
+
     private fun onAddNoteTextChange(text: String) {
         _state.update {
             it.copy(
                 noteText = text
             )
-        }
-    }
-
-    fun onEvent(event: CreateRecordEvent) {
-        when (event) {
-            is CreateRecordEvent.OnTrackSizeAvailable -> onTrackSizeAvailable(event.trackSizeInfo)
-            CreateRecordEvent.FailedToSaveFile -> onFailedToSaveFile()
         }
     }
 
@@ -140,7 +147,7 @@ class CreateRecordViewModel(
                     _state.update {
                         it.copy(
                             playbackState = PlaybackState.STOPPED,
-                            durationPlayed = Duration.ZERO
+                            durationPlayed = ZERO
                         )
                     }
                 }
@@ -166,6 +173,30 @@ class CreateRecordViewModel(
 
     private fun onPauseAudioClick() {
         audioPlayer.pause()
+    }
+
+    private fun onSeekAudio(progress: Float) {
+        audioPlayer.seekTo(
+            filePath = recordingDetails.tempFilePath
+                ?: throw IllegalArgumentException("Temp file path is null."),
+            onComplete = {
+                _state.update {
+                    it.copy(
+                        playbackState = PlaybackState.STOPPED,
+                        durationPlayed = ZERO
+                    )
+                }
+            },
+            progress = progress
+        )
+
+        _state.update {
+            val newDurationPlayed =
+                (it.playbackTotalDuration.inWholeMilliseconds * progress).toLong().milliseconds
+            it.copy(
+                durationPlayed = newDurationPlayed
+            )
+        }
     }
 
     private fun onTrackSizeAvailable(trackSizeInfo: TrackSizeInfo) {
