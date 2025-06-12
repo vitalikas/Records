@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import lt.vitalijus.records.BuildConfig
 import lt.vitalijus.records.app.di.appModule
+import lt.vitalijus.records.core.database.di.databaseModule
 import lt.vitalijus.records.record.di.recordsModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -25,7 +26,8 @@ class RecordsApp : Application() {
             androidContext(this@RecordsApp)
             modules(
                 appModule,
-                recordsModule
+                recordsModule,
+                databaseModule
             )
         }
     }
