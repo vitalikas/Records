@@ -51,10 +51,12 @@ class CreateRecordViewModel(
 
     private val restoredTopics = savedStateHandle.get<String>("topics")
         ?.split(",")
+        ?.filter { it.isNotBlank() }
         ?: emptyList()
     private val restoredDurationPlayed = savedStateHandle.get<Long>("durationPlayed")
     private val restoredPlaybackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")
-    private val restoredProgress = divideNullableLongsIf(restoredDurationPlayed, restoredPlaybackTotalDuration) ?: 0f
+    private val restoredProgress =
+        divideNullableLongsIf(restoredDurationPlayed, restoredPlaybackTotalDuration) ?: 0f
     private val _state = MutableStateFlow(
         CreateRecordState(
             playbackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")?.milliseconds
