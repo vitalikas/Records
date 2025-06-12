@@ -55,8 +55,10 @@ class CreateRecordViewModel(
         ?: emptyList()
     private val restoredDurationPlayed = savedStateHandle.get<Long>("durationPlayed")
     private val restoredPlaybackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")
-    private val restoredProgress =
-        divideNullableLongsIf(restoredDurationPlayed, restoredPlaybackTotalDuration) ?: 0f
+    private val restoredProgress = calculateRestoredProgress(
+        playedDuration = restoredDurationPlayed,
+        totalDuration = restoredPlaybackTotalDuration
+    ) ?: 0f
     private val _state = MutableStateFlow(
         CreateRecordState(
             playbackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")?.milliseconds
@@ -357,13 +359,13 @@ class CreateRecordViewModel(
             .launchIn(viewModelScope)
     }
 
-    fun divideNullableLongsIf(numerator: Long?, denominator: Long?): Float? {
-        if (numerator == null || denominator == null) {
+    private fun calculateRestoredProgress(playedDuration: Long?, totalDuration: Long?): Float? {
+        if (playedDuration == null || totalDuration == null) {
             return null
         }
-        if (denominator == 0L) {
+        if (totalDuration == 0L) {
             return null
         }
-        return numerator.toFloat() / denominator.toFloat()
+        return playedDuration.toFloat() / totalDuration.toFloat()
     }
 }
