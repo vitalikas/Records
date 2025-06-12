@@ -52,6 +52,9 @@ class CreateRecordViewModel(
     private val restoredTopics = savedStateHandle.get<String>("topics")
         ?.split(",")
         ?: emptyList()
+    private val restoredDurationPlayed = savedStateHandle.get<Long>("durationPlayed")
+    private val restoredPlaybackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")
+    private val restoredProgress = divideNullableLongsIf(restoredDurationPlayed, restoredPlaybackTotalDuration) ?: 0f
     private val _state = MutableStateFlow(
         CreateRecordState(
             playbackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")?.milliseconds
@@ -64,12 +67,14 @@ class CreateRecordViewModel(
             },
             showMoodSelector = savedStateHandle.get<String>("mood") == null,
             canSaveRecord = savedStateHandle.get<Boolean>("canSaveRecord") ?: false,
-            durationPlayed = savedStateHandle.get<Long>("durationPlayed")?.milliseconds ?: ZERO,
+            durationPlayed = savedStateHandle.get<Long>("durationPlayed")?.milliseconds ?: ZERO
         )
     )
     val state = _state
         .onStart {
             if (!hasLoadedInitialData) {
+                val progress = restoredProgress
+                audioPlayer.setPendingSeek(progress = progress)
                 observeAddTopicText()
                 hasLoadedInitialData = true
             }
@@ -176,6 +181,7 @@ class CreateRecordViewModel(
     }
 
     private fun onSeekAudio(progress: Float) {
+        audioPlayer.setPendingSeek(null)
         audioPlayer.seekTo(
             filePath = recordingDetails.tempFilePath
                 ?: throw IllegalArgumentException("Temp file path is null."),
@@ -347,5 +353,15 @@ class CreateRecordViewModel(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    fun divideNullableLongsIf(numerator: Long?, denominator: Long?): Float? {
+        if (numerator == null || denominator == null) {
+            return null
+        }
+        if (denominator == 0L) {
+            return null
+        }
+        return numerator.toFloat() / denominator.toFloat()
     }
 }

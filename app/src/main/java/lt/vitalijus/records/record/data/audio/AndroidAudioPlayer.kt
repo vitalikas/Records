@@ -23,6 +23,7 @@ class AndroidAudioPlayer(
     private var currentFilePath: String? = null
     private var mediaPlayer: MediaPlayer? = null
     private var isMediaPlayerPrepared: Boolean = false
+    private var pendingSeekProgressRatio: Float? = null
 
     private val _activeTrack = MutableStateFlow(AudioTrack())
     override val activeTrack
@@ -47,6 +48,14 @@ class AndroidAudioPlayer(
 
         mediaPlayer?.let { player ->
             try {
+                pendingSeekProgressRatio?.let { progressRatio ->
+                    seekMediaPlayer(
+                        player = player,
+                        progressRatio = progressRatio
+                    )
+                    pendingSeekProgressRatio = null
+                }
+
                 player.start()
                 _activeTrack.update {
                     it.copy(
@@ -56,6 +65,7 @@ class AndroidAudioPlayer(
                 trackDuration()
             } catch (e: IllegalStateException) {
                 Timber.e(e, "Error starting MediaPlayer, possibly in a bad state.")
+                pendingSeekProgressRatio = null
                 _activeTrack.update {
                     it.copy(
                         isPlaying = false
@@ -96,12 +106,6 @@ class AndroidAudioPlayer(
     }
 
     override fun stop() {
-        _activeTrack.update {
-            it.copy(
-                isPlaying = false,
-                durationPlayed = ZERO
-            )
-        }
         durationJob?.cancel()
         mediaPlayer?.apply {
             try {
@@ -115,6 +119,13 @@ class AndroidAudioPlayer(
         mediaPlayer = null
         isMediaPlayerPrepared = false
         currentFilePath = null
+        _activeTrack.update {
+            it.copy(
+                isPlaying = false,
+                durationPlayed = ZERO,
+                totalDuration = ZERO
+            )
+        }
     }
 
     override fun seekTo(
@@ -133,22 +144,26 @@ class AndroidAudioPlayer(
             )
         }
 
-        mediaPlayer?.let { player ->
-            if (isMediaPlayerPrepared) {
-                val targetPosition = (player.duration * progress).toInt().coerceAtLeast(0)
-                player.seekTo(targetPosition)
-
-                _activeTrack.update {
-                    it.copy(
-                        durationPlayed = targetPosition.milliseconds
-                    )
-                }
-            } else {
-                Timber.w("MediaPlayer not prepared, cannot seek.")
+        try {
+            mediaPlayer?.let { player ->
+                seekMediaPlayer(
+                    player = player,
+                    progressRatio = progress
+                )
             }
-        } ?: run {
-            Timber.w("MediaPlayer not initialised, cannot seek.")
+        } catch (e: IllegalStateException) {
+            Timber.e(e, "Error seeking MediaPlayer.")
+            pendingSeekProgressRatio = progress
+            _activeTrack.update {
+                it.copy(
+                    isPlaying = false
+                )
+            }
         }
+    }
+
+    override fun setPendingSeek(progress: Float?) {
+        pendingSeekProgressRatio = progress?.coerceIn(0f, 1f)
     }
 
     private fun initMediaPlayer(
@@ -167,6 +182,11 @@ class AndroidAudioPlayer(
 
                 setOnCompletionListener {
                     isMediaPlayerPrepared = false
+                    _activeTrack.update {
+                        it.copy(
+                            isPlaying = false
+                        )
+                    }
                     onComplete()
                     stop()
                 }
@@ -203,6 +223,25 @@ class AndroidAudioPlayer(
                 }
                 delay(10L)
             } while (activeTrack.value.isPlaying && mediaPlayer?.isPlaying == true)
+        }
+    }
+
+    @Throws(IllegalStateException::class)
+    private fun seekMediaPlayer(
+        player: MediaPlayer,
+        progressRatio: Float
+    ) {
+        if (isMediaPlayerPrepared && player.duration > 0) {
+            val targetPosition = (player.duration * progressRatio).toInt().coerceAtLeast(0)
+            player.seekTo(targetPosition)
+
+            _activeTrack.update {
+                it.copy(
+                    durationPlayed = targetPosition.milliseconds
+                )
+            }
+        } else {
+            Timber.w("Cannot apply pending seek: Player not prepared or duration unknown.")
         }
     }
 }

@@ -10,4 +10,5 @@ interface AudioPlayer {
     fun resume()
     fun stop()
     fun seekTo(filePath: String, onComplete: () -> Unit, progress: Float)
+    fun setPendingSeek(progress: Float?)
 }
