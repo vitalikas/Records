@@ -10,7 +10,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 
-data class RecordState(
+data class RecordsState(
     val records: Map<UiText, List<RecordUi>> = emptyMap(),
     val currentCaptureMethod: AudioCaptureMethod? = null,
     val recordingType: RecordingType = RecordingType.NOT_RECORDING,

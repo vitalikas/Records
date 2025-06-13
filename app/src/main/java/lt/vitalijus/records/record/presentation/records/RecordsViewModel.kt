@@ -46,10 +46,10 @@ class RecordsViewModel(
 
     private val selectedTopicFilters = MutableStateFlow<List<String>>(emptyList())
 
-    private val eventChannel = Channel<RecordEvent>()
+    private val eventChannel = Channel<RecordsEvent>()
     val events = eventChannel.receiveAsFlow()
 
-    private val _state = MutableStateFlow(RecordState())
+    private val _state = MutableStateFlow(RecordsState())
     val state = _state
         .onStart {
             if (!hasLoadedInitialData) {
@@ -60,12 +60,12 @@ class RecordsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = RecordState()
+            initialValue = RecordsState()
         )
 
-    fun onAction(action: RecordAction) {
+    fun onAction(action: RecordsAction) {
         when (action) {
-            is RecordAction.OnFilterChipClick -> {
+            is RecordsAction.OnFilterChipClick -> {
                 val type = action.chipType
                 when (type) {
                     RecordFilterChipType.MOOD -> {
@@ -90,7 +90,7 @@ class RecordsViewModel(
                 }
             }
 
-            is RecordAction.OnRemoveFilters -> {
+            is RecordsAction.OnRemoveFilters -> {
                 when (action.filterType) {
                     RecordFilterChipType.MOOD -> {
                         selectedMoodFilters.update { emptyList() }
@@ -102,11 +102,11 @@ class RecordsViewModel(
                 }
             }
 
-            RecordAction.OnSettingsClick -> {
+            RecordsAction.OnSettingsClick -> {
 
             }
 
-            is RecordAction.OnDismissFilterDropDown -> {
+            is RecordsAction.OnDismissFilterDropDown -> {
                 when (action.filterType) {
                     RecordFilterChipType.MOOD -> {
                         _state.update {
@@ -130,7 +130,7 @@ class RecordsViewModel(
                 }
             }
 
-            is RecordAction.OnFilterByItem -> {
+            is RecordsAction.OnFilterByItem -> {
                 when (action.filterItem) {
                     is FilterItem.MoodItem -> {
                         toggleMoodFilter(moodUi = action.filterItem.moodUi)
@@ -142,25 +142,25 @@ class RecordsViewModel(
                 }
             }
 
-            is RecordAction.OnPlayAudioClick -> onPlayAudioClick(action.recordId)
+            is RecordsAction.OnPlayAudioClick -> onPlayAudioClick(action.recordId)
 
-            RecordAction.OnPauseAudioClick -> onPauseAudioClick()
+            RecordsAction.OnPauseAudioClick -> onPauseAudioClick()
 
-            is RecordAction.OnTrackSizeAvailable -> {
+            is RecordsAction.OnTrackSizeAvailable -> {
 
             }
 
-            RecordAction.OnCancelRecording -> cancelRecording()
+            RecordsAction.OnCancelRecording -> cancelRecording()
 
-            RecordAction.OnCompleteRecording -> stopRecording()
+            RecordsAction.OnCompleteRecording -> stopRecording()
 
-            RecordAction.OnPauseRecording -> pauseRecording()
+            RecordsAction.OnPauseRecording -> pauseRecording()
 
-            RecordAction.OnResumeRecording -> resumeRecording()
+            RecordsAction.OnResumeRecording -> resumeRecording()
 
-            RecordAction.OnRecordButtonLongClick -> startRecording(captureMethod = AudioCaptureMethod.QUICK)
+            RecordsAction.OnRecordsButtonLongClick -> startRecording(captureMethod = AudioCaptureMethod.QUICK)
 
-            is RecordAction.OnSeekAudio -> {}
+            is RecordsAction.OnSeekAudio -> {}
         }
     }
 
@@ -205,19 +205,19 @@ class RecordsViewModel(
         playingRecordId.update { null }
     }
 
-    fun onEvent(event: RecordEvent) {
+    fun onEvent(event: RecordsEvent) {
         when (event) {
-            RecordEvent.AudioPermission.OnGranted -> {
+            RecordsEvent.AudioPermission.OnGranted -> {
                 startRecording(
                     captureMethod = AudioCaptureMethod.STANDARD
                 )
             }
 
-            is RecordEvent.AudioPermission.OnRequest -> {
+            is RecordsEvent.AudioPermission.OnRequest -> {
                 val captureMethod = event.captureMethod
                 viewModelScope.launch {
                     eventChannel.send(
-                        RecordEvent.AudioPermission.OnRequest(captureMethod = captureMethod)
+                        RecordsEvent.AudioPermission.OnRequest(captureMethod = captureMethod)
                     )
                 }
                 _state.update {
@@ -227,19 +227,19 @@ class RecordsViewModel(
                 }
             }
 
-            is RecordEvent.RecordState.OnDone -> {
+            is RecordsEvent.RecordsState.OnDone -> {
                 val recordingDetails = voiceRecorder.recordingDetails.value
                 viewModelScope.launch {
                     eventChannel.send(
-                        RecordEvent.RecordState.OnDone(recordingDetails = recordingDetails)
+                        RecordsEvent.RecordsState.OnDone(recordingDetails = recordingDetails)
                     )
                 }
             }
 
-            RecordEvent.RecordState.OnTooShort -> {
+            RecordsEvent.RecordsState.OnTooShort -> {
                 viewModelScope.launch {
                     eventChannel.send(
-                        RecordEvent.RecordState.OnTooShort
+                        RecordsEvent.RecordsState.OnTooShort
                     )
                 }
             }
@@ -313,9 +313,9 @@ class RecordsViewModel(
         val recordingDetails = voiceRecorder.recordingDetails.value
         viewModelScope.launch {
             if (recordingDetails.duration < MIN_RECORD_DURATION) {
-                eventChannel.send(RecordEvent.RecordState.OnTooShort)
+                eventChannel.send(RecordsEvent.RecordsState.OnTooShort)
             } else {
-                eventChannel.send(RecordEvent.RecordState.OnDone(recordingDetails = recordingDetails))
+                eventChannel.send(RecordsEvent.RecordsState.OnDone(recordingDetails = recordingDetails))
             }
         }
     }

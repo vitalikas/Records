@@ -3,15 +3,15 @@ package lt.vitalijus.records.record.presentation.records
 import lt.vitalijus.records.record.domain.recording.RecordingDetails
 import lt.vitalijus.records.record.presentation.records.models.AudioCaptureMethod
 
-sealed interface RecordEvent {
+sealed interface RecordsEvent {
 
-    sealed interface AudioPermission : RecordEvent {
+    sealed interface AudioPermission : RecordsEvent {
         data class OnRequest(val captureMethod: AudioCaptureMethod) : AudioPermission
         data object OnGranted : AudioPermission
     }
 
-    sealed interface RecordState: RecordEvent {
-        data object OnTooShort : RecordState
-        data class OnDone(val recordingDetails: RecordingDetails) : RecordState
+    sealed interface RecordsState: RecordsEvent {
+        data object OnTooShort : RecordsState
+        data class OnDone(val recordingDetails: RecordingDetails) : RecordsState
     }
 }

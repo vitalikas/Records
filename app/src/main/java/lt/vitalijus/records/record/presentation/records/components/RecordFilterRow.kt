@@ -28,7 +28,7 @@ import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.chips.MultiChoiceChip
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableDropDownOptionsMenu
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
-import lt.vitalijus.records.record.presentation.records.RecordAction
+import lt.vitalijus.records.record.presentation.records.RecordsAction
 import lt.vitalijus.records.record.presentation.records.models.FilterChip
 import lt.vitalijus.records.record.presentation.records.models.FilterItem
 import lt.vitalijus.records.record.presentation.records.models.RecordFilterChipType
@@ -37,7 +37,7 @@ import lt.vitalijus.records.record.presentation.records.models.RecordFilterChipT
 fun RecordFilterRow(
     moodFilterChip: FilterChip.MoodFilterChip,
     topicFilterChip: FilterChip.TopicFilterChip,
-    onAction: (RecordAction) -> Unit,
+    onAction: (RecordsAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -81,11 +81,11 @@ fun RecordFilterRow(
             },
             displayText = moodFilterChip.content.title.asString(),
             onClick = {
-                onAction(RecordAction.OnFilterChipClick(chipType = RecordFilterChipType.MOOD))
+                onAction(RecordsAction.OnFilterChipClick(chipType = RecordFilterChipType.MOOD))
             },
             isClearButtonVisible = moodFilterChip.hasActiveFilters,
             onClearButtonClick = {
-                onAction(RecordAction.OnRemoveFilters(filterType = RecordFilterChipType.MOOD))
+                onAction(RecordsAction.OnRemoveFilters(filterType = RecordFilterChipType.MOOD))
             },
             isHighlighted = moodFilterChip.hasActiveFilters,
             isDropDownVisible = moodFilterChip.isDropDownVisible,
@@ -96,10 +96,10 @@ fun RecordFilterRow(
                         moodUi.title.asString(context = context)
                     },
                     onDismiss = {
-                        onAction(RecordAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.MOOD))
+                        onAction(RecordsAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.MOOD))
                     },
                     onItemClick = { moodUi ->
-                        onAction(RecordAction.OnFilterByItem(filterItem = FilterItem.MoodItem(moodUi = moodUi.item)))
+                        onAction(RecordsAction.OnFilterByItem(filterItem = FilterItem.MoodItem(moodUi = moodUi.item)))
                     },
                     dropDownOffset = dropDownOffset,
                     maxDropDownHeight = maxDropDownHeight,
@@ -117,11 +117,11 @@ fun RecordFilterRow(
         MultiChoiceChip(
             displayText = topicFilterChip.content.text.asString(),
             onClick = {
-                onAction(RecordAction.OnFilterChipClick(chipType = RecordFilterChipType.TOPIC))
+                onAction(RecordsAction.OnFilterChipClick(chipType = RecordFilterChipType.TOPIC))
             },
             isClearButtonVisible = topicFilterChip.hasActiveFilters,
             onClearButtonClick = {
-                onAction(RecordAction.OnRemoveFilters(filterType = RecordFilterChipType.TOPIC))
+                onAction(RecordsAction.OnRemoveFilters(filterType = RecordFilterChipType.TOPIC))
             },
             isHighlighted = topicFilterChip.hasActiveFilters,
             isDropDownVisible = topicFilterChip.isDropDownVisible,
@@ -136,7 +136,7 @@ fun RecordFilterRow(
                         ),
                         itemDisplayText = { it },
                         onDismiss = {
-                            onAction(RecordAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.TOPIC))
+                            onAction(RecordsAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.TOPIC))
                         },
                         onItemClick = {
 
@@ -151,11 +151,11 @@ fun RecordFilterRow(
                             topic
                         },
                         onDismiss = {
-                            onAction(RecordAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.TOPIC))
+                            onAction(RecordsAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.TOPIC))
                         },
                         onItemClick = { topic ->
                             onAction(
-                                RecordAction.OnFilterByItem(
+                                RecordsAction.OnFilterByItem(
                                     filterItem = FilterItem.TopicItem(
                                         topic = topic.item
                                     )

@@ -28,7 +28,6 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.bgGradient
 import lt.vitalijus.records.core.presentation.util.ObserveAsEvents
 import lt.vitalijus.records.core.presentation.util.isAppInForeground
 import lt.vitalijus.records.record.domain.recording.RecordingDetails
-import lt.vitalijus.records.record.presentation.create_record.CreateRecordAction
 import lt.vitalijus.records.record.presentation.records.components.RecordDraggableFloatingActionButton
 import lt.vitalijus.records.record.presentation.records.components.RecordFilterRow
 import lt.vitalijus.records.record.presentation.records.components.RecordList
@@ -51,23 +50,23 @@ fun RecordsRoot(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted && state.currentCaptureMethod == AudioCaptureMethod.STANDARD) {
-            viewModel.onEvent(RecordEvent.AudioPermission.OnGranted)
+            viewModel.onEvent(RecordsEvent.AudioPermission.OnGranted)
         }
     }
 
     val context = LocalContext.current
     ObserveAsEvents(viewModel.events) { event ->
         when (event) {
-            is RecordEvent.AudioPermission.OnRequest -> {
+            is RecordsEvent.AudioPermission.OnRequest -> {
                 permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
 
-            is RecordEvent.RecordState.OnDone -> {
+            is RecordsEvent.RecordsState.OnDone -> {
                 Timber.d("Recording done")
                 onNavigateToCreateRecord(event.recordingDetails)
             }
 
-            RecordEvent.RecordState.OnTooShort -> {
+            RecordsEvent.RecordsState.OnTooShort -> {
                 Toast.makeText(
                     context,
                     context.getString(R.string.audio_recording_was_too_short),
@@ -75,7 +74,7 @@ fun RecordsRoot(
                 ).show()
             }
 
-            RecordEvent.AudioPermission.OnGranted -> {
+            RecordsEvent.AudioPermission.OnGranted -> {
 
             }
         }
@@ -84,7 +83,7 @@ fun RecordsRoot(
     val isAppInForeground by isAppInForeground()
     LaunchedEffect(isAppInForeground, state.currentCaptureMethod) {
         if (state.currentCaptureMethod == AudioCaptureMethod.STANDARD && !isAppInForeground) {
-            viewModel.onAction(RecordAction.OnPauseRecording)
+            viewModel.onAction(RecordsAction.OnPauseRecording)
         }
     }
 
@@ -97,9 +96,9 @@ fun RecordsRoot(
 
 @Composable
 fun RecordScreen(
-    state: RecordState,
-    onAction: (RecordAction) -> Unit,
-    onEvent: (RecordEvent) -> Unit
+    state: RecordsState,
+    onAction: (RecordsAction) -> Unit,
+    onEvent: (RecordsEvent) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -108,7 +107,7 @@ fun RecordScreen(
             RecordDraggableFloatingActionButton(
                 onClick = {
                     onEvent(
-                        RecordEvent.AudioPermission.OnRequest(
+                        RecordsEvent.AudioPermission.OnRequest(
                             captureMethod = AudioCaptureMethod.STANDARD
                         )
                     )
@@ -121,10 +120,10 @@ fun RecordScreen(
                             Manifest.permission.RECORD_AUDIO
                         ) == PackageManager.PERMISSION_GRANTED
                     if (hasPermission) {
-                        onAction(RecordAction.OnRecordButtonLongClick)
+                        onAction(RecordsAction.OnRecordsButtonLongClick)
                     } else {
                         onEvent(
-                            RecordEvent.AudioPermission.OnRequest(
+                            RecordsEvent.AudioPermission.OnRequest(
                                 captureMethod = AudioCaptureMethod.QUICK
                             )
                         )
@@ -132,9 +131,9 @@ fun RecordScreen(
                 },
                 onLongPressEnd = { cancelledRecording ->
                     if (cancelledRecording) {
-                        onAction(RecordAction.OnCancelRecording)
+                        onAction(RecordsAction.OnCancelRecording)
                     } else {
-                        onAction(RecordAction.OnCompleteRecording)
+                        onAction(RecordsAction.OnCompleteRecording)
                     }
                 }
             )
@@ -142,7 +141,7 @@ fun RecordScreen(
         topBar = {
             RecordsTopBar(
                 onSettingsClick = {
-                    onAction(RecordAction.OnSettingsClick)
+                    onAction(RecordsAction.OnSettingsClick)
                 }
             )
         }
@@ -186,16 +185,16 @@ fun RecordScreen(
                     RecordList(
                         sections = state.recordDaySections,
                         onPlayClick = { recordId ->
-                            onAction(RecordAction.OnPlayAudioClick(recordId))
+                            onAction(RecordsAction.OnPlayAudioClick(recordId))
                         },
                         onPauseClick = {
-                            onAction(RecordAction.OnPauseAudioClick)
+                            onAction(RecordsAction.OnPauseAudioClick)
                         },
                         onSeekAudio = {
-                            onAction(RecordAction.OnSeekAudio(it))
+                            onAction(RecordsAction.OnSeekAudio(it))
                         },
                         onTrackSizeAvailable = { trackSizeInfo ->
-                            onAction(RecordAction.OnTrackSizeAvailable(trackSizeInfo))
+                            onAction(RecordsAction.OnTrackSizeAvailable(trackSizeInfo))
                         }
                     )
                 }
@@ -208,10 +207,10 @@ fun RecordScreen(
             RecordRecordingSheet(
                 formattedRecordDuration = state.formattedRecordDuration,
                 isRecording = state.recordingType == RecordingType.RECORDING,
-                onDismiss = { onAction(RecordAction.OnCancelRecording) },
-                onPauseClick = { onAction(RecordAction.OnPauseRecording) },
-                onResumeClick = { onAction(RecordAction.OnResumeRecording) },
-                onCompleteRecording = { onAction(RecordAction.OnCompleteRecording) }
+                onDismiss = { onAction(RecordsAction.OnCancelRecording) },
+                onPauseClick = { onAction(RecordsAction.OnPauseRecording) },
+                onResumeClick = { onAction(RecordsAction.OnResumeRecording) },
+                onCompleteRecording = { onAction(RecordsAction.OnCompleteRecording) }
             )
         }
     }
@@ -222,7 +221,7 @@ fun RecordScreen(
 private fun Preview() {
     RecordsTheme {
         RecordScreen(
-            state = RecordState(
+            state = RecordsState(
                 isLoadingData = false,
                 hasRecorded = false
             ),
