@@ -2,14 +2,14 @@ package lt.vitalijus.records.core.database.record
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import lt.vitalijus.records.record.presentation.models.MoodUi
+import lt.vitalijus.records.record.domain.record.Mood
 
 @Entity(tableName = RecordEntity.TABLE_NAME)
 data class RecordEntity(
     @PrimaryKey(autoGenerate = true)
     val recordId: Int = 0,
     val title: String,
-    val moodUi: MoodUi,
+    val mood: Mood,
     val recordedAt: Long,
     val note: String?,
     val audioFilePath: String,

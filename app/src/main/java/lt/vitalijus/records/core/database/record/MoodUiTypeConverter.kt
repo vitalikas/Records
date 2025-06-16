@@ -1,17 +1,17 @@
 package lt.vitalijus.records.core.database.record
 
 import androidx.room.TypeConverter
-import lt.vitalijus.records.record.presentation.models.MoodUi
+import lt.vitalijus.records.record.domain.record.Mood
 
 object MoodUiTypeConverter {
 
     @TypeConverter
-    fun fromMoodUi(moodUi: MoodUi): String {
-        return moodUi.name
+    fun fromMood(mood: Mood): String {
+        return mood.name
     }
 
     @TypeConverter
-    fun toMoodUi(moodUiString: String): MoodUi {
-        return MoodUi.valueOf(moodUiString)
+    fun toMood(moodName: String): Mood {
+        return Mood.valueOf(moodName)
     }
 }

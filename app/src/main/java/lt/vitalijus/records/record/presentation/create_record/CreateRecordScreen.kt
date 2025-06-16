@@ -87,6 +87,10 @@ fun CreateRecordRoot(
             }
 
             is CreateRecordEvent.OnTrackSizeAvailable -> Unit
+
+            CreateRecordEvent.SuccessfullySaved -> {
+                onConfirmLeave()
+            }
         }
     }
 

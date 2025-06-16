@@ -25,19 +25,24 @@ import kotlinx.coroutines.launch
 import lt.vitalijus.records.app.navigation.NavigationRoute
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
 import lt.vitalijus.records.record.domain.audio.AudioPlayer
+import lt.vitalijus.records.record.domain.record.Mood
+import lt.vitalijus.records.record.domain.record.Record
+import lt.vitalijus.records.record.domain.record.RecordDataSource
 import lt.vitalijus.records.record.domain.recording.RecordingStorage
 import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
 import lt.vitalijus.records.record.presentation.util.toRecordDetails
+import java.time.Instant
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.milliseconds
 
 class CreateRecordViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val recordingStorage: RecordingStorage,
-    private val audioPlayer: AudioPlayer
+    private val audioPlayer: AudioPlayer,
+    private val recordDataSource: RecordDataSource
 ) : ViewModel() {
 
     private var hasLoadedInitialData = false
@@ -128,6 +133,7 @@ class CreateRecordViewModel(
         when (event) {
             is CreateRecordEvent.OnTrackSizeAvailable -> onTrackSizeAvailable(event.trackSizeInfo)
             CreateRecordEvent.FailedToSaveFile -> onFailedToSaveFile()
+            CreateRecordEvent.SuccessfullySaved -> onSuccessfullySaved()
         }
     }
 
@@ -143,6 +149,10 @@ class CreateRecordViewModel(
         viewModelScope.launch {
             eventChannel.send(CreateRecordEvent.FailedToSaveFile)
         }
+    }
+
+    private fun onSuccessfullySaved() {
+
     }
 
     private fun onPlayAudioClick() {
@@ -236,7 +246,7 @@ class CreateRecordViewModel(
     }
 
     private fun onSaveClick() {
-        if (recordingDetails.tempFilePath == null) {
+        if (recordingDetails.tempFilePath == null || !state.value.canSaveRecord) {
             return
         }
 
@@ -249,7 +259,21 @@ class CreateRecordViewModel(
                 return@launch
             }
 
-            // TODO: Save record to database
+            val state = state.value
+            val record = Record(
+                mood = state.moodUi?.let { moodUi ->
+                    Mood.valueOf(moodUi.name)
+                } ?: throw IllegalStateException("Mood must be set before saving record."),
+                title = state.titleText.trim(),
+                note = state.noteText.ifBlank { null },
+                topics = state.topics,
+                audioFilePath = recordingDetails.tempFilePath,
+                audioPlaybackLength = recordingDetails.duration,
+                audioAmplitudes = recordingDetails.amplitudes,
+                recordedAt = Instant.now()
+            )
+            recordDataSource.insertRecord(record = record)
+            eventChannel.send(CreateRecordEvent.SuccessfullySaved)
         }
     }
 
