@@ -267,9 +267,9 @@ class CreateRecordViewModel(
                 title = state.titleText.trim(),
                 note = state.noteText.ifBlank { null },
                 topics = state.topics,
-                audioFilePath = recordingDetails.tempFilePath,
-                audioPlaybackLength = recordingDetails.duration,
-                audioAmplitudes = recordingDetails.amplitudes,
+                audioFilePath = persistentFilePath,
+                audioPlaybackLength = state.playbackTotalDuration,
+                audioAmplitudes = state.playbackAmplitudes,
                 recordedAt = Instant.now()
             )
             recordDataSource.insertRecord(record = record)
@@ -278,6 +278,15 @@ class CreateRecordViewModel(
     }
 
     private fun onShowConfirmLeaveDialog() {
+        if (state.value.playbackState == PlaybackState.PLAYING) {
+            audioPlayer.pause()
+            _state.update {
+                it.copy(
+                    playbackState = PlaybackState.PAUSED
+                )
+            }
+        }
+
         _state.update {
             it.copy(
                 showConfirmLeaveDialog = true

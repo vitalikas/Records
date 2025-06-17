@@ -18,7 +18,7 @@ data class RecordsState(
     val moodFilterChipData: FilterChip.MoodFilterChip = FilterChip.MoodFilterChip(),
     val topicFilterChipData: FilterChip.TopicFilterChip = FilterChip.TopicFilterChip(),
     val hasRecorded: Boolean = false,
-    val isLoadingData: Boolean = false
+    val isLoadingData: Boolean = true
 ) {
     val recordDaySections = records
         .toList()

@@ -126,7 +126,7 @@ fun RecordFilterRow(
             isHighlighted = topicFilterChip.hasActiveFilters,
             isDropDownVisible = topicFilterChip.isDropDownVisible,
             dropDownMenu = {
-                if (topicFilterChip.content.text.asString().isEmpty()) {
+                if (topicFilterChip.selectableItems.isEmpty()) {
                     SelectableDropDownOptionsMenu(
                         items = listOf(
                             SelectableItem(

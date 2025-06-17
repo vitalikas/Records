@@ -2,11 +2,14 @@ package lt.vitalijus.records.record.presentation.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -20,18 +23,28 @@ import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableI
 import lt.vitalijus.records.core.presentation.util.UiText
 import lt.vitalijus.records.record.data.recording.AndroidVoiceRecorder
 import lt.vitalijus.records.record.domain.audio.AudioPlayer
+import lt.vitalijus.records.record.domain.record.RecordDataSource
 import lt.vitalijus.records.record.presentation.models.MoodUi
+import lt.vitalijus.records.record.presentation.models.RecordUi
 import lt.vitalijus.records.record.presentation.records.models.AudioCaptureMethod
 import lt.vitalijus.records.record.presentation.records.models.FilterItem
 import lt.vitalijus.records.record.presentation.records.models.MoodChipItemContent
+import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import lt.vitalijus.records.record.presentation.records.models.RecordFilterChipType
 import lt.vitalijus.records.record.presentation.records.models.RecordingType
+import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
+import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
+import lt.vitalijus.records.record.presentation.util.toRecordUi
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.seconds
 
 class RecordsViewModel(
     private val voiceRecorder: AndroidVoiceRecorder,
-    private val audioPlayer: AudioPlayer
+    private val audioPlayer: AudioPlayer,
+    private val recordDataSource: RecordDataSource
 ) : ViewModel() {
 
     companion object {
@@ -46,6 +59,8 @@ class RecordsViewModel(
 
     private val selectedTopicFilters = MutableStateFlow<List<String>>(emptyList())
 
+    private val audioTrackSizeInfo = MutableStateFlow<TrackSizeInfo?>(null)
+
     private val eventChannel = Channel<RecordsEvent>()
     val events = eventChannel.receiveAsFlow()
 
@@ -54,6 +69,7 @@ class RecordsViewModel(
         .onStart {
             if (!hasLoadedInitialData) {
                 observeFilters()
+                observeRecords()
                 hasLoadedInitialData = true
             }
         }
@@ -62,6 +78,32 @@ class RecordsViewModel(
             started = SharingStarted.WhileSubscribed(5_000L),
             initialValue = RecordsState()
         )
+
+    private val records = recordDataSource
+        .observeRecords()
+        .onEach { records ->
+            _state.update {
+                it.copy(
+                    hasRecorded = records.isNotEmpty(),
+                    isLoadingData = false,
+                )
+            }
+        }
+        .combine(audioTrackSizeInfo) { records, trackSizeInfo ->
+            trackSizeInfo?.let { trackSize ->
+                records.map { record ->
+                    record.copy(
+                        audioAmplitudes = AmplitudeNormalizer.normalize(
+                            sourceAmplitudes = record.audioAmplitudes,
+                            trackWidth = trackSize.trackWidth,
+                            barWidth = trackSize.barWidth,
+                            spacing = trackSize.spacing
+                        )
+                    )
+                }
+            } ?: records
+        }
+        .flowOn(Dispatchers.Default)
 
     fun onAction(action: RecordsAction) {
         when (action) {
@@ -147,7 +189,9 @@ class RecordsViewModel(
             RecordsAction.OnPauseAudioClick -> onPauseAudioClick()
 
             is RecordsAction.OnTrackSizeAvailable -> {
-
+                audioTrackSizeInfo.update {
+                    action.trackSizeInfo
+                }
             }
 
             RecordsAction.OnCancelRecording -> cancelRecording()
@@ -162,6 +206,41 @@ class RecordsViewModel(
 
             is RecordsAction.OnSeekAudio -> {}
         }
+    }
+
+    private fun observeRecords() {
+        combine(
+            records,
+            playingRecordId,
+            audioPlayer.activeTrack
+        ) { records, playingRecordId, activeTrack ->
+            if (playingRecordId == null) {
+                return@combine records.map { record ->
+                    record.toRecordUi()
+                }
+            }
+
+            records.map { record ->
+                if (record.id == playingRecordId) {
+                    record.toRecordUi(
+                        currentPlaybackDuration = activeTrack.durationPlayed,
+                        playbackState = if (activeTrack.isPlaying) PlaybackState.PLAYING else PlaybackState.PAUSED
+                    )
+                } else {
+                    record.toRecordUi()
+                }
+            }
+        }
+            .groupByRelativeDate()
+            .onEach { groupedRecords ->
+                _state.update {
+                    it.copy(
+                        records = groupedRecords
+                    )
+                }
+            }
+            .flowOn(Dispatchers.Default)
+            .launchIn(viewModelScope)
     }
 
     private fun onPauseAudioClick() {
@@ -417,6 +496,32 @@ class RecordsViewModel(
                     )
                 )
             }
+        }
+    }
+
+    private fun Flow<List<RecordUi>>.groupByRelativeDate(): Flow<Map<UiText, List<RecordUi>>> {
+        val formatter = DateTimeFormatter.ofPattern("dd MMM")
+        val today = LocalDate.now()
+
+        return map { records ->
+            records
+                .groupBy { record ->
+                    LocalDate.ofInstant(
+                        record.recordedAt,
+                        ZoneId.systemDefault()
+                    )
+                }
+                .mapValues { (_: LocalDate, records) ->
+                    records.sortedByDescending { it.recordedAt }
+                }
+                .toSortedMap(compareByDescending { it })
+                .mapKeys { (date, _) ->
+                    when (date) {
+                        today -> UiText.StringResource(R.string.today)
+                        today.minusDays(1) -> UiText.StringResource(R.string.yesterday)
+                        else -> UiText.Dynamic(date.format(formatter))
+                    }
+                }
         }
     }
 }

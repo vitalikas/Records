@@ -22,11 +22,7 @@ sealed interface FilterChip<T> {
 
     data class TopicFilterChip(
         val content: TopicChipItemContent = TopicChipItemContent(), // Topic-specific content (title)
-        override val selectableItems: List<SelectableItem<String>> = listOf(
-            "Love",
-            "Happy",
-            "Work"
-        ).asUnselectedItems(),
+        override val selectableItems: List<SelectableItem<String>> = emptyList<String>().asUnselectedItems(),
         override val onItemClick: (String) -> Unit = {},
         override val hasActiveFilters: Boolean = false,
         override val isDropDownVisible: Boolean = false,
