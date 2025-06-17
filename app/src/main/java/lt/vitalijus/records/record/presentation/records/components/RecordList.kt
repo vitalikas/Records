@@ -31,7 +31,7 @@ fun RecordList(
     sections: List<RecordDaySection>,
     onPlayClick: (recordId: Int) -> Unit,
     onPauseClick: () -> Unit,
-    onSeekAudio: (Float) -> Unit,
+    onSeekAudio: (recordId: Int, progress: Float) -> Unit,
     onTrackSizeAvailable: (TrackSizeInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -76,7 +76,9 @@ fun RecordList(
                         onPlayClick(record.id)
                     },
                     onPauseClick = onPauseClick,
-                    onSeekAudio = onSeekAudio,
+                    onSeekAudio = { progress ->
+                        onSeekAudio(record.id, progress)
+                    },
                     onTrackSizeAvailable = onTrackSizeAvailable
                 )
             }
@@ -138,7 +140,8 @@ private fun RecordListPreview() {
             sections = sections,
             onPlayClick = {},
             onPauseClick = {},
-            onSeekAudio = {},
+            onSeekAudio = { _, _ ->
+            },
             onTrackSizeAvailable = {}
         )
     }

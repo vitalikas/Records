@@ -31,7 +31,7 @@ fun RecordPlayBar(
     trackColor: Color,
     trackFillColor: Color,
     playerProgress: Float,
-    onSeek: (progress: Float) -> Unit,
+    onSeekAudio: (progress: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Canvas(
@@ -40,7 +40,7 @@ fun RecordPlayBar(
                 detectTapGestures(
                     onTap = { offset ->
                         val progress = (offset.x / size.width).coerceIn(0f, 1f)
-                        onSeek(progress)
+                        onSeekAudio(progress)
                     }
                 )
             }
@@ -110,7 +110,7 @@ private fun RecordPlayBarPreview() {
             trackColor = MoodUi.SAD.colorSet.desaturated,
             trackFillColor = MoodUi.SAD.colorSet.vivid,
             playerProgress = 0.23f,
-            onSeek = {},
+            onSeekAudio = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)

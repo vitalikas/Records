@@ -33,7 +33,7 @@ fun RecordCard(
     onTrackSizeAvailable: (TrackSizeInfo) -> Unit,
     onPlayClick: () -> Unit,
     onPauseClick: () -> Unit,
-    onSeekAudio: (Float) -> Unit,
+    onSeekAudio: (progress: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(

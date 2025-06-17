@@ -99,7 +99,7 @@ fun RecordMoodPlayer(
                 trackColor = trackColor,
                 trackFillColor = trackFillColor,
                 playerProgress = playerProgress,
-                onSeek = onSeekAudio,
+                onSeekAudio = onSeekAudio,
                 modifier = Modifier
                     .weight(1f)
                     .padding(

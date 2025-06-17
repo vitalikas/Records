@@ -190,8 +190,13 @@ fun RecordScreen(
                         onPauseClick = {
                             onAction(RecordsAction.OnPauseAudioClick)
                         },
-                        onSeekAudio = {
-                            onAction(RecordsAction.OnSeekAudio(it))
+                        onSeekAudio = { recordId, progress ->
+                            onAction(
+                                RecordsAction.OnSeekAudio(
+                                    recordId = recordId,
+                                    progress = progress
+                                )
+                            )
                         },
                         onTrackSizeAvailable = { trackSizeInfo ->
                             onAction(RecordsAction.OnTrackSizeAvailable(trackSizeInfo))

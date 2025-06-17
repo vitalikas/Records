@@ -13,7 +13,7 @@ sealed interface RecordsAction {
     data object OnSettingsClick : RecordsAction
     data class OnPlayAudioClick(val recordId: Int) : RecordsAction
     data object OnPauseAudioClick : RecordsAction
-    data class OnSeekAudio(val progress: Float) : RecordsAction
+    data class OnSeekAudio(val recordId: Int, val progress: Float) : RecordsAction
     data class OnTrackSizeAvailable(val trackSizeInfo: TrackSizeInfo) : RecordsAction
 
     data object OnRecordsButtonLongClick : RecordsAction

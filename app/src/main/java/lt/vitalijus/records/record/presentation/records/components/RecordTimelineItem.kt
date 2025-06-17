@@ -34,7 +34,7 @@ fun RecordTimelineItem(
     relativePosition: RelativePosition,
     onPlayClick: () -> Unit,
     onPauseClick: () -> Unit,
-    onSeekAudio: (Float) -> Unit,
+    onSeekAudio: (progress: Float) -> Unit,
     onTrackSizeAvailable: (TrackSizeInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {

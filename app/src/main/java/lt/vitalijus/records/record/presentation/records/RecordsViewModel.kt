@@ -204,7 +204,10 @@ class RecordsViewModel(
 
             RecordsAction.OnRecordsButtonLongClick -> startRecording(captureMethod = AudioCaptureMethod.QUICK)
 
-            is RecordsAction.OnSeekAudio -> {}
+            is RecordsAction.OnSeekAudio -> onSeekAudio(
+                recordId = action.recordId,
+                progress = action.progress
+            )
         }
     }
 
@@ -243,10 +246,6 @@ class RecordsViewModel(
             .launchIn(viewModelScope)
     }
 
-    private fun onPauseAudioClick() {
-        audioPlayer.pause()
-    }
-
     private fun onPlayAudioClick(recordId: Int) {
         val selectedRecord = state.value.records.values.flatten().first { it.id == recordId }
         val activeTrack = audioPlayer.activeTrack.value
@@ -266,6 +265,28 @@ class RecordsViewModel(
 
             else -> audioPlayer.resume()
         }
+    }
+
+    private fun onPauseAudioClick() {
+        audioPlayer.pause()
+    }
+
+    private fun onSeekAudio(
+        recordId: Int,
+        progress: Float
+    ) {
+        val selectedRecord = state.value.records.values.flatten().first { it.id == recordId }
+
+        if (playingRecordId.value != selectedRecord.id) {
+            return
+        }
+
+        audioPlayer.setPendingSeek(null)
+        audioPlayer.seekTo(
+            filePath = selectedRecord.audioFilePath,
+            onComplete = ::completePlayback,
+            progress = progress
+        )
     }
 
     private fun completePlayback() {
