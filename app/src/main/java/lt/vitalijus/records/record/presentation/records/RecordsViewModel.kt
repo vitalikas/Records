@@ -25,6 +25,7 @@ import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableI
 import lt.vitalijus.records.core.presentation.util.UiText
 import lt.vitalijus.records.record.data.recording.AndroidVoiceRecorder
 import lt.vitalijus.records.record.domain.audio.AudioPlayer
+import lt.vitalijus.records.record.domain.record.Record
 import lt.vitalijus.records.record.domain.record.RecordDataSource
 import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.models.RecordUi
@@ -88,8 +89,9 @@ class RecordsViewModel(
             initialValue = RecordsState()
         )
 
-    private val records = recordDataSource
+    private val filteredRecords = recordDataSource
         .observeRecords()
+        .filterByMoodAndTopics()
         .onEach { records ->
             _state.update {
                 it.copy(
@@ -222,7 +224,7 @@ class RecordsViewModel(
 
     private fun observeRecords() {
         combine(
-            records,
+            filteredRecords,
             playingRecordId,
             audioPlayer.activeTrack
         ) { records, playingRecordId, activeTrack ->
@@ -245,8 +247,7 @@ class RecordsViewModel(
         }
             .groupByRelativeDate()
             .onStart {
-                Timber.d("seeking to $restoredProgress")
-                val recordList = records.firstOrNull()
+                val recordList = filteredRecords.firstOrNull()
                 val recordToSeek = recordList?.firstOrNull { it.id == restoredSelectedRecordId }
                 if (recordToSeek != null) {
                     recordList.forEach { record ->
@@ -494,9 +495,10 @@ class RecordsViewModel(
 
     private fun observeFilters() {
         combine(
+            recordDataSource.observeTopics(),
             selectedMoodFilters,
             selectedTopicFilters
-        ) { selectedMoods, selectedTopics ->
+        ) { allTopics, selectedMoods, selectedTopics ->
             _state.update {
                 it.copy(
                     moodFilterChipData = it.moodFilterChipData.copy(
@@ -510,10 +512,10 @@ class RecordsViewModel(
                         hasActiveFilters = selectedMoods.isNotEmpty()
                     ),
                     topicFilterChipData = it.topicFilterChipData.copy(
-                        selectableItems = it.topicFilterChipData.selectableItems.map { topic ->
+                        selectableItems = allTopics.map { topic ->
                             SelectableItem(
-                                item = topic.item,
-                                selected = selectedTopics.contains(topic.item)
+                                item = topic,
+                                selected = selectedTopics.contains(topic)
                             )
                         },
                         content = it.topicFilterChipData.content.copy(
@@ -568,6 +570,36 @@ class RecordsViewModel(
                         uiTexts = moodNames.take(2)
                     )
                 )
+            }
+        }
+    }
+
+    private fun Flow<List<Record>>.filterByMoodAndTopics(): Flow<List<Record>> {
+        return combine(
+            this@filterByMoodAndTopics,
+            selectedMoodFilters,
+            selectedTopicFilters
+        ) { records, moods, topics ->
+            records.filter { record ->
+                val matchesMood = moods
+                    .takeIf { moods ->
+                        moods.isNotEmpty()
+                    }
+                    ?.any { mood ->
+                        mood.name == record.mood.name
+                    }
+                    ?: true
+
+                val matchesTopics = topics
+                    .takeIf { topics ->
+                        topics.isNotEmpty()
+                    }
+                    ?.any { topic ->
+                        topic in record.topics
+                    }
+                    ?: true
+
+                matchesMood && matchesTopics
             }
         }
     }
