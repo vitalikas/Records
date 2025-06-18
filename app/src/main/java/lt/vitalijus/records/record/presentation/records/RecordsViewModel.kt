@@ -275,13 +275,19 @@ class RecordsViewModel(
         recordId: Int,
         progress: Float
     ) {
-        val selectedRecord = state.value.records.values.flatten().first { it.id == recordId }
+        val selectedRecord = state.value.records.values
+            .flatten()
+            .firstOrNull { it.id == recordId }
 
-        if (playingRecordId.value != selectedRecord.id) {
+        if (selectedRecord == null) {
             return
         }
 
-        audioPlayer.setPendingSeek(null)
+        val currentlyPlayingId = playingRecordId.value
+        if (currentlyPlayingId != recordId) {
+            playingRecordId.update { recordId }
+        }
+        
         audioPlayer.seekTo(
             filePath = selectedRecord.audioFilePath,
             onComplete = ::completePlayback,
