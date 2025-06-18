@@ -1,5 +1,6 @@
 package lt.vitalijus.records.record.presentation.records
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -34,14 +36,18 @@ import lt.vitalijus.records.record.presentation.records.models.RecordFilterChipT
 import lt.vitalijus.records.record.presentation.records.models.RecordingType
 import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
+import lt.vitalijus.records.record.presentation.util.ProgressCalculator
 import lt.vitalijus.records.record.presentation.util.toRecordUi
+import timber.log.Timber
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class RecordsViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val voiceRecorder: AndroidVoiceRecorder,
     private val audioPlayer: AudioPlayer,
     private val recordDataSource: RecordDataSource
@@ -63,6 +69,9 @@ class RecordsViewModel(
 
     private val eventChannel = Channel<RecordsEvent>()
     val events = eventChannel.receiveAsFlow()
+
+    private val restoredSelectedRecordId = savedStateHandle.get<Int>("selectedRecordId")
+    private val restoredProgress = savedStateHandle.get<Float>("progress")
 
     private val _state = MutableStateFlow(RecordsState())
     val state = _state
@@ -235,6 +244,26 @@ class RecordsViewModel(
             }
         }
             .groupByRelativeDate()
+            .onStart {
+                Timber.d("seeking to $restoredProgress")
+                val recordList = records.firstOrNull()
+                val recordToSeek = recordList?.firstOrNull { it.id == restoredSelectedRecordId }
+                if (recordToSeek != null) {
+                    recordList.forEach { record ->
+                        playingRecordId.update { restoredSelectedRecordId }
+                        audioPlayer.seekTo(
+                            filePath = record.audioFilePath,
+                            onComplete = ::completePlayback,
+                            progress = restoredProgress ?: 0f
+                        )
+                        record.toRecordUi(
+                            currentPlaybackDuration = restoredProgress?.toDouble()?.milliseconds
+                                ?: ZERO,
+                            playbackState = if (audioPlayer.activeTrack.value.isPlaying) PlaybackState.PLAYING else PlaybackState.PAUSED
+                        )
+                    }
+                }
+            }
             .onEach { groupedRecords ->
                 _state.update {
                     it.copy(
@@ -265,10 +294,23 @@ class RecordsViewModel(
 
             else -> audioPlayer.resume()
         }
+
+        savedStateHandle["selectedRecordId"] = recordId
     }
 
     private fun onPauseAudioClick() {
         audioPlayer.pause()
+
+        val activeTrackValue = audioPlayer.activeTrack.value
+        val durationPlayedMs = activeTrackValue.durationPlayed.inWholeMilliseconds
+        val totalDurationMs = activeTrackValue.totalDuration.inWholeMilliseconds
+
+        val progress = ProgressCalculator.calculate(
+            playedDuration = durationPlayedMs,
+            totalDuration = totalDurationMs
+        )
+
+        savedStateHandle["progress"] = progress?.coerceIn(0f, 1f) ?: 0f
     }
 
     private fun onSeekAudio(
@@ -287,12 +329,16 @@ class RecordsViewModel(
         if (currentlyPlayingId != recordId) {
             playingRecordId.update { recordId }
         }
-        
+
+        audioPlayer.setPendingSeek(null)
         audioPlayer.seekTo(
             filePath = selectedRecord.audioFilePath,
             onComplete = ::completePlayback,
             progress = progress
         )
+
+        savedStateHandle["selectedRecordId"] = recordId
+        savedStateHandle["progress"] = progress
     }
 
     private fun completePlayback() {

@@ -33,6 +33,7 @@ import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.records.models.PlaybackState
 import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
+import lt.vitalijus.records.record.presentation.util.ProgressCalculator
 import lt.vitalijus.records.record.presentation.util.toRecordDetails
 import java.time.Instant
 import kotlin.time.Duration.Companion.ZERO
@@ -60,7 +61,7 @@ class CreateRecordViewModel(
         ?: emptyList()
     private val restoredDurationPlayed = savedStateHandle.get<Long>("durationPlayed")
     private val restoredPlaybackTotalDuration = savedStateHandle.get<Long>("playbackTotalDuration")
-    private val restoredProgress = calculateRestoredProgress(
+    private val restoredProgress = ProgressCalculator.calculate(
         playedDuration = restoredDurationPlayed,
         totalDuration = restoredPlaybackTotalDuration
     ) ?: 0f
@@ -390,15 +391,5 @@ class CreateRecordViewModel(
                 }
             }
             .launchIn(viewModelScope)
-    }
-
-    private fun calculateRestoredProgress(playedDuration: Long?, totalDuration: Long?): Float? {
-        if (playedDuration == null || totalDuration == null) {
-            return null
-        }
-        if (totalDuration == 0L) {
-            return null
-        }
-        return playedDuration.toFloat() / totalDuration.toFloat()
     }
 }
