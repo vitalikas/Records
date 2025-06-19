@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import lt.vitalijus.records.app.navigation.NavigationRoute
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem.Companion.asUnselectedItems
-import lt.vitalijus.records.record.domain.audio.AudioPlayer
+import lt.vitalijus.records.record.domain.audio.AudioPlayerFactory
 import lt.vitalijus.records.record.domain.record.Mood
 import lt.vitalijus.records.record.domain.record.Record
 import lt.vitalijus.records.record.domain.record.RecordDataSource
@@ -44,10 +44,12 @@ import kotlin.time.Duration.Companion.milliseconds
 class CreateRecordViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val recordingStorage: RecordingStorage,
-    private val audioPlayer: AudioPlayer,
+    audioPlayerFactory: AudioPlayerFactory,
     private val recordDataSource: RecordDataSource,
     private val settingsPreferences: SettingsPreferences
 ) : ViewModel() {
+
+    private val audioPlayer = audioPlayerFactory.create(scope = viewModelScope)
 
     private var hasLoadedInitialData = false
 

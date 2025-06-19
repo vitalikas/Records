@@ -23,10 +23,10 @@ import kotlinx.coroutines.launch
 import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
 import lt.vitalijus.records.core.presentation.util.UiText
-import lt.vitalijus.records.record.data.recording.AndroidVoiceRecorder
-import lt.vitalijus.records.record.domain.audio.AudioPlayer
+import lt.vitalijus.records.record.domain.audio.AudioPlayerFactory
 import lt.vitalijus.records.record.domain.record.Record
 import lt.vitalijus.records.record.domain.record.RecordDataSource
+import lt.vitalijus.records.record.domain.recording.VoiceRecorderFactory
 import lt.vitalijus.records.record.presentation.models.MoodUi
 import lt.vitalijus.records.record.presentation.models.RecordUi
 import lt.vitalijus.records.record.presentation.records.models.AudioCaptureMethod
@@ -39,7 +39,6 @@ import lt.vitalijus.records.record.presentation.records.models.TrackSizeInfo
 import lt.vitalijus.records.record.presentation.util.AmplitudeNormalizer
 import lt.vitalijus.records.record.presentation.util.ProgressCalculator
 import lt.vitalijus.records.record.presentation.util.toRecordUi
-import timber.log.Timber
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -49,14 +48,17 @@ import kotlin.time.Duration.Companion.seconds
 
 class RecordsViewModel(
     private val savedStateHandle: SavedStateHandle,
-    private val voiceRecorder: AndroidVoiceRecorder,
-    private val audioPlayer: AudioPlayer,
+    voiceRecorderFactory: VoiceRecorderFactory,
+    audioPlayerFactory: AudioPlayerFactory,
     private val recordDataSource: RecordDataSource
 ) : ViewModel() {
 
     companion object {
         private val MIN_RECORD_DURATION = 1.5.seconds
     }
+
+    private val voiceRecorder = voiceRecorderFactory.create(scope = viewModelScope)
+    private val audioPlayer = audioPlayerFactory.create(scope = viewModelScope)
 
     private var hasLoadedInitialData = false
 

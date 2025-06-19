@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.milliseconds
 
 class AndroidAudioPlayer(
-    private val applicationScope: CoroutineScope
+    private val coroutineScope: CoroutineScope
 ) : AudioPlayer {
 
     private var currentFilePath: String? = null
@@ -213,7 +213,7 @@ class AndroidAudioPlayer(
 
     private fun trackDuration() {
         durationJob?.cancel()
-        durationJob = applicationScope.launch {
+        durationJob = coroutineScope.launch {
             do {
                 _activeTrack.update {
                     it.copy(

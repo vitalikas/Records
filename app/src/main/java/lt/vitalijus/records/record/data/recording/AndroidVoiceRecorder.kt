@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class AndroidVoiceRecorder(
     private val context: Context,
-    private val applicationScope: CoroutineScope
+    private val coroutineScope: CoroutineScope
 ) : VoiceRecorder {
 
     companion object {
@@ -132,7 +132,7 @@ class AndroidVoiceRecorder(
     private fun resetSession() {
         _recordingDetails.update { RecordingDetails() }
 
-        applicationScope.launch {
+        coroutineScope.launch {
             withContext(singleThreadDispatcher) {
                 amplitudes.clear()
                 cleanup()
@@ -168,7 +168,7 @@ class AndroidVoiceRecorder(
     }
 
     private fun startTrackingDuration() {
-        durationJob = applicationScope.launch {
+        durationJob = coroutineScope.launch {
             var lastTime = System.currentTimeMillis()
             while (isRecording && !isPaused) {
                 delay(10L)
@@ -187,7 +187,7 @@ class AndroidVoiceRecorder(
     }
 
     private fun startTrackingAmplitudes() {
-        amplitudeJob = applicationScope.launch {
+        amplitudeJob = coroutineScope.launch {
             while (isRecording && !isPaused) {
                 val amplitude = getAmplitude()
                 withContext(singleThreadDispatcher) {
