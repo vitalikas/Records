@@ -42,6 +42,7 @@ import timber.log.Timber
 @Composable
 fun RecordsRoot(
     onNavigateToCreateRecord: (RecordingDetails) -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: RecordsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -74,9 +75,7 @@ fun RecordsRoot(
                 ).show()
             }
 
-            RecordsEvent.AudioPermission.OnGranted -> {
-
-            }
+            RecordsEvent.AudioPermission.OnGranted -> Unit
         }
     }
 
@@ -89,7 +88,12 @@ fun RecordsRoot(
 
     RecordScreen(
         state = state,
-        onAction = viewModel::onAction,
+        onAction = { action ->
+            when (action) {
+                is RecordsAction.OnSettingsClick -> onNavigateToSettings()
+                else -> viewModel.onAction(action)
+            }
+        },
         onEvent = viewModel::onEvent
     )
 }

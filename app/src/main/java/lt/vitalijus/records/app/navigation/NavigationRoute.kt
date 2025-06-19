@@ -13,4 +13,7 @@ interface NavigationRoute {
         val duration: Long,
         val amplitudes: String
     ) : NavigationRoute
+
+    @Serializable
+    data object Settings : NavigationRoute
 }
