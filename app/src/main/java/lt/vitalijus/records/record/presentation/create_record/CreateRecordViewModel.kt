@@ -408,9 +408,12 @@ class CreateRecordViewModel(
             .observeDefaultMood()
             .take(1)
             .onEach { defaultMood ->
+                val moodUi = MoodUi.valueOf(defaultMood.name)
                 _state.update {
                     it.copy(
-                        selectedMoodUi = MoodUi.valueOf(defaultMood.name)
+                        selectedMoodUi = moodUi,
+                        moodUi = moodUi,
+                        showMoodSelector = false
                     )
                 }
             }
