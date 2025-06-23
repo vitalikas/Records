@@ -5,7 +5,9 @@ import kotlinx.serialization.Serializable
 interface NavigationRoute {
 
     @Serializable
-    data object Records : NavigationRoute
+    data class Records(
+        val startRecording: Boolean
+    ) : NavigationRoute
 
     @Serializable
     data class CreateRecord(

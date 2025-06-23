@@ -42,7 +42,7 @@
     <string name="my_topics">My Topics</string>
     <string name="select_default_topics_to_apply_to_all_new_entries">Select default topics to apply to all new entries</string>
     <string name="create_new_entry_widget">Create New Entry Widget</string>
-    <string name="record_a_new_echo">Record a new echo with a single tap</string>
+    <string name="add_a_new_record">Add a new record with a single tap</string>
     <string name="you_don_t_have_any_topics_yet">You don\'t have any topics yet!</string>
     <string name="audio_recording_was_too_short">Audio recording was too short</string>
     <string name="clear_selections">Clear selections</string>

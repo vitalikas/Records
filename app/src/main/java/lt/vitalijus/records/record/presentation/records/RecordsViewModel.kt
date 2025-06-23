@@ -82,6 +82,7 @@ class RecordsViewModel(
             if (!hasLoadedInitialData) {
                 observeFilters()
                 observeRecords()
+                fetchNavigationArgs()
                 hasLoadedInitialData = true
             }
         }
@@ -221,6 +222,23 @@ class RecordsViewModel(
                 recordId = action.recordId,
                 progress = action.progress
             )
+        }
+    }
+
+    private fun fetchNavigationArgs() {
+        val startRecording = savedStateHandle["startRecording"] ?: false
+        if (startRecording) {
+            viewModelScope.launch {
+                eventChannel.send(
+                    RecordsEvent.AudioPermission.OnRequest(captureMethod = AudioCaptureMethod.STANDARD)
+                )
+            }
+
+            _state.update {
+                it.copy(
+                    currentCaptureMethod = AudioCaptureMethod.STANDARD
+                )
+            }
         }
     }
 
@@ -386,7 +404,18 @@ class RecordsViewModel(
                 val recordingDetails = voiceRecorder.recordingDetails.value
                 viewModelScope.launch {
                     eventChannel.send(
-                        RecordsEvent.RecordsState.OnDone(recordingDetails = recordingDetails)
+                        RecordsEvent.RecordsState.OnDone(
+                            recordingDetails = recordingDetails.copy(
+                                // Arbitrary track dimensions to not make the app crash
+                                // when navigating and passing the amplitudes as an argument.
+                                amplitudes = AmplitudeNormalizer.normalize(
+                                    sourceAmplitudes = recordingDetails.amplitudes,
+                                    trackWidth = 10_000f,
+                                    barWidth = 20f,
+                                    spacing = 15f
+                                )
+                            )
+                        )
                     )
                 }
             }
