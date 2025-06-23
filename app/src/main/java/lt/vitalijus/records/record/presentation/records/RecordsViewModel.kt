@@ -491,7 +491,8 @@ class RecordsViewModel(
         voiceRecorder.stop()
         _state.update {
             it.copy(
-                recordingType = RecordingType.NOT_RECORDING
+                recordingType = RecordingType.NOT_RECORDING,
+                currentCaptureMethod = null
             )
         }
         val recordingDetails = voiceRecorder.recordingDetails.value
