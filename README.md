@@ -48,9 +48,6 @@
 *   **Logging:** [Timber](https://github.com/JakeWharton/timber)
 *   **Permissions:** Android Runtime Permissions for `RECORD_AUDIO`.
 
-## 📸 Screenshots / Demo
+## 📸 Screenshots
 
-*(It's highly recommended to add a few screenshots or a short GIF/WebM demo of the app in action here!)*
-
-**Example:**
 ![My App Screenshot](app/src/main/assets/Screenshot_20250623_131701.png)
