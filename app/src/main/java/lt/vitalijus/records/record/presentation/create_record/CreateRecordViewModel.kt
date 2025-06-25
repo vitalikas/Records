@@ -1,4 +1,4 @@
-@file:OptIn(FlowPreview::class)
+@file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
 package lt.vitalijus.records.record.presentation.create_record
 
@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -14,6 +15,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -89,7 +92,7 @@ class CreateRecordViewModel(
         .onStart {
             if (!hasLoadedInitialData) {
                 handlePlayerSeek()
-                observeAddTopicText()
+                observeTopicSuggestion()
                 fetchDefaultSettings()
                 hasLoadedInitialData = true
             }
@@ -158,7 +161,9 @@ class CreateRecordViewModel(
     }
 
     private fun onSuccessfullySaved() {
-
+        viewModelScope.launch {
+            eventChannel.send(CreateRecordEvent.SuccessfullySaved)
+        }
     }
 
     private fun onPlayAudioClick() {
@@ -279,7 +284,7 @@ class CreateRecordViewModel(
                 recordedAt = Instant.now()
             )
             recordDataSource.insertRecord(record = record)
-            eventChannel.send(CreateRecordEvent.SuccessfullySaved)
+            onSuccessfullySaved()
         }
     }
 
@@ -377,27 +382,6 @@ class CreateRecordViewModel(
         }
     }
 
-    private fun observeAddTopicText() {
-        state
-            .map {
-                it.addTopicText
-            }
-            .debounce(250)
-            .distinctUntilChanged()
-            .onEach { query ->
-                _state.update {
-                    it.copy(
-                        showTopicSuggestions = query.isNotBlank() && query.trim() !in it.topics,
-                        searchResult = listOf(
-                            "hello",
-                            "helloworld"
-                        ).asUnselectedItems()
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
-    }
-
     private fun handlePlayerSeek() {
         val progress = restoredProgress
         audioPlayer.setPendingSeek(progress = progress)
@@ -426,6 +410,50 @@ class CreateRecordViewModel(
                 _state.update {
                     it.copy(
                         topics = defaultTopics
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeTopicSuggestion() {
+        state
+            .map { it.addTopicText }
+            .debounce(300)
+            .distinctUntilChanged()
+            .flatMapLatest { query ->
+                if (query.isNotBlank()) {
+                    recordDataSource.searchTopics(query = query.trim()).map { result ->
+                        query.trim() to result
+                    }
+                } else {
+                    flowOf("" to emptyList())
+                }
+            }
+            .onEach { (currentQuery, searchResults) ->
+                val alreadySelectedTopics = state.value.topics.toSet()
+                val filteredTopics = searchResults - alreadySelectedTopics
+
+                val showCreateTopicOption = currentQuery.isNotBlank() &&
+                        currentQuery !in searchResults
+
+                _state.update {
+                    it.copy(
+                        showTopicSuggestions = if (currentQuery.isBlank()) {
+                            false
+                        } else {
+                            searchResults.isNotEmpty() || showCreateTopicOption
+                        },
+                        searchResult = if (currentQuery.isBlank()) {
+                            emptyList<String>().asUnselectedItems()
+                        } else {
+                            filteredTopics.asUnselectedItems()
+                        },
+                        showCreateTopicOption = if (currentQuery.isBlank()) {
+                            false
+                        } else {
+                            showCreateTopicOption
+                        }
                     )
                 }
             }

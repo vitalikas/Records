@@ -121,107 +121,103 @@ class RecordsViewModel(
 
     fun onAction(action: RecordsAction) {
         when (action) {
-            is RecordsAction.OnFilterChipClick -> {
-                val type = action.chipType
-                when (type) {
-                    RecordFilterChipType.MOOD -> {
-                        _state.update {
-                            it.copy(
-                                moodFilterChipData = it.moodFilterChipData.copy(
-                                    isDropDownVisible = !it.moodFilterChipData.isDropDownVisible
-                                )
-                            )
-                        }
-                    }
-
-                    RecordFilterChipType.TOPIC -> {
-                        _state.update {
-                            it.copy(
-                                topicFilterChipData = it.topicFilterChipData.copy(
-                                    isDropDownVisible = !it.topicFilterChipData.isDropDownVisible
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-
-            is RecordsAction.OnRemoveFilters -> {
-                when (action.filterType) {
-                    RecordFilterChipType.MOOD -> {
-                        selectedMoodFilters.update { emptyList() }
-                    }
-
-                    RecordFilterChipType.TOPIC -> {
-                        selectedTopicFilters.update { emptyList() }
-                    }
-                }
-            }
-
-            RecordsAction.OnSettingsClick -> {
-
-            }
-
-            is RecordsAction.OnDismissFilterDropDown -> {
-                when (action.filterType) {
-                    RecordFilterChipType.MOOD -> {
-                        _state.update {
-                            it.copy(
-                                moodFilterChipData = it.moodFilterChipData.copy(
-                                    isDropDownVisible = false
-                                )
-                            )
-                        }
-                    }
-
-                    RecordFilterChipType.TOPIC -> {
-                        _state.update {
-                            it.copy(
-                                topicFilterChipData = it.topicFilterChipData.copy(
-                                    isDropDownVisible = false
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-
-            is RecordsAction.OnFilterByItem -> {
-                when (action.filterItem) {
-                    is FilterItem.MoodItem -> {
-                        toggleMoodFilter(moodUi = action.filterItem.moodUi)
-                    }
-
-                    is FilterItem.TopicItem -> {
-                        toggleTopicFilter(topic = action.filterItem.topic)
-                    }
-                }
-            }
-
-            is RecordsAction.OnPlayAudioClick -> onPlayAudioClick(action.recordId)
-
+            is RecordsAction.OnFilterChipClick -> onFilterChipClick(action)
+            is RecordsAction.OnRemoveFilters -> onRemoveFilters(action)
+            RecordsAction.OnSettingsClick -> Unit
+            is RecordsAction.OnDismissFilterDropDown -> onDismissFilterDropDown(action)
+            is RecordsAction.OnFilterByItem -> onFilterByItem(action)
+            is RecordsAction.OnPlayAudioClick -> onPlayAudioClick(action)
             RecordsAction.OnPauseAudioClick -> onPauseAudioClick()
+            is RecordsAction.OnTrackSizeAvailable -> onTrackSizeAvailable(action)
+            RecordsAction.OnCancelRecording -> cancelRecording()
+            RecordsAction.OnCompleteRecording -> stopRecording()
+            RecordsAction.OnPauseRecording -> pauseRecording()
+            RecordsAction.OnResumeRecording -> resumeRecording()
+            RecordsAction.OnRecordsButtonLongClick -> onRecordsButtonLongClick()
+            is RecordsAction.OnSeekAudio -> onSeekAudio(action)
+        }
+    }
 
-            is RecordsAction.OnTrackSizeAvailable -> {
-                audioTrackSizeInfo.update {
-                    action.trackSizeInfo
+    private fun onRecordsButtonLongClick() {
+        startRecording(captureMethod = AudioCaptureMethod.QUICK)
+    }
+
+    private fun onTrackSizeAvailable(action: RecordsAction.OnTrackSizeAvailable) {
+        audioTrackSizeInfo.update {
+            action.trackSizeInfo
+        }
+    }
+
+    private fun onDismissFilterDropDown(action: RecordsAction.OnDismissFilterDropDown) {
+        when (action.filterType) {
+            RecordFilterChipType.MOOD -> {
+                _state.update {
+                    it.copy(
+                        moodFilterChipData = it.moodFilterChipData.copy(
+                            isDropDownVisible = false
+                        )
+                    )
                 }
             }
 
-            RecordsAction.OnCancelRecording -> cancelRecording()
+            RecordFilterChipType.TOPIC -> {
+                _state.update {
+                    it.copy(
+                        topicFilterChipData = it.topicFilterChipData.copy(
+                            isDropDownVisible = false
+                        )
+                    )
+                }
+            }
+        }
+    }
 
-            RecordsAction.OnCompleteRecording -> stopRecording()
+    private fun onRemoveFilters(action: RecordsAction.OnRemoveFilters) {
+        when (action.filterType) {
+            RecordFilterChipType.MOOD -> {
+                selectedMoodFilters.update { emptyList() }
+            }
 
-            RecordsAction.OnPauseRecording -> pauseRecording()
+            RecordFilterChipType.TOPIC -> {
+                selectedTopicFilters.update { emptyList() }
+            }
+        }
+    }
 
-            RecordsAction.OnResumeRecording -> resumeRecording()
+    private fun onFilterChipClick(action: RecordsAction.OnFilterChipClick) {
+        val type = action.chipType
+        when (type) {
+            RecordFilterChipType.MOOD -> {
+                _state.update {
+                    it.copy(
+                        moodFilterChipData = it.moodFilterChipData.copy(
+                            isDropDownVisible = !it.moodFilterChipData.isDropDownVisible
+                        )
+                    )
+                }
+            }
 
-            RecordsAction.OnRecordsButtonLongClick -> startRecording(captureMethod = AudioCaptureMethod.QUICK)
+            RecordFilterChipType.TOPIC -> {
+                _state.update {
+                    it.copy(
+                        topicFilterChipData = it.topicFilterChipData.copy(
+                            isDropDownVisible = !it.topicFilterChipData.isDropDownVisible
+                        )
+                    )
+                }
+            }
+        }
+    }
 
-            is RecordsAction.OnSeekAudio -> onSeekAudio(
-                recordId = action.recordId,
-                progress = action.progress
-            )
+    private fun onFilterByItem(action: RecordsAction.OnFilterByItem) {
+        when (action.filterItem) {
+            is FilterItem.MoodItem -> {
+                toggleMoodFilter(moodUi = action.filterItem.moodUi)
+            }
+
+            is FilterItem.TopicItem -> {
+                toggleTopicFilter(topic = action.filterItem.topic)
+            }
         }
     }
 
@@ -296,7 +292,8 @@ class RecordsViewModel(
             .launchIn(viewModelScope)
     }
 
-    private fun onPlayAudioClick(recordId: Int) {
+    private fun onPlayAudioClick(action: RecordsAction.OnPlayAudioClick) {
+        val recordId = action.recordId
         val selectedRecord = state.value.records.values.flatten().first { it.id == recordId }
         val activeTrack = audioPlayer.activeTrack.value
         val isNewRecord = playingRecordId.value != recordId
@@ -335,9 +332,11 @@ class RecordsViewModel(
     }
 
     private fun onSeekAudio(
-        recordId: Int,
-        progress: Float
+        action: RecordsAction.OnSeekAudio
     ) {
+        val recordId = action.recordId
+        val progress = action.progress
+
         val selectedRecord = state.value.records.values
             .flatten()
             .firstOrNull { it.id == recordId }
