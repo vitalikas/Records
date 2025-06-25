@@ -53,4 +53,4 @@
 *(It's highly recommended to add a few screenshots or a short GIF/WebM demo of the app in action here!)*
 
 **Example:**
-`[Link to a demo video/gif if you have one]`
+![My App Screenshot](app/src/main/assets/Screenshot_20250623_131701.png)
