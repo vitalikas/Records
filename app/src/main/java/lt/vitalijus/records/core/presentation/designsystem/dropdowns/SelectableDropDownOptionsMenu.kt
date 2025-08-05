@@ -37,7 +37,7 @@ import lt.vitalijus.records.core.presentation.designsystem.theme.RecordsTheme
 @Composable
 fun <T : Any> SelectableDropDownOptionsMenu(
     items: List<SelectableItem<T>>,
-    itemDisplayText: (T) -> String,
+    itemDisplayText: @Composable (T) -> String,
     onDismiss: () -> Unit,
     onItemClick: (SelectableItem<T>) -> Unit,
     modifier: Modifier = Modifier,

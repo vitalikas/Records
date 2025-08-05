@@ -28,6 +28,8 @@ import lt.vitalijus.records.R
 import lt.vitalijus.records.core.presentation.designsystem.chips.MultiChoiceChip
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableDropDownOptionsMenu
 import lt.vitalijus.records.core.presentation.designsystem.dropdowns.SelectableItem
+import lt.vitalijus.records.core.presentation.util.UiText
+import lt.vitalijus.records.core.presentation.util.asString
 import lt.vitalijus.records.record.presentation.records.RecordsAction
 import lt.vitalijus.records.record.presentation.records.models.FilterChip
 import lt.vitalijus.records.record.presentation.records.models.FilterItem
@@ -71,7 +73,7 @@ fun RecordFilterRow(
                         moodFilterChip.content.iconsRes.forEach { iconRes ->
                             Image(
                                 imageVector = ImageVector.vectorResource(iconRes),
-                                contentDescription = moodFilterChip.content.title.asString(),
+                                contentDescription = null,
                                 modifier = Modifier
                                     .height(16.dp)
                             )
@@ -79,7 +81,7 @@ fun RecordFilterRow(
                     }
                 }
             },
-            displayText = moodFilterChip.content.title.asString(),
+            displayText = formatText(moodFilterChip.content.titles),
             onClick = {
                 onAction(RecordsAction.OnFilterChipClick(chipType = RecordFilterChipType.MOOD))
             },
@@ -93,13 +95,19 @@ fun RecordFilterRow(
                 SelectableDropDownOptionsMenu(
                     items = moodFilterChip.selectableItems,
                     itemDisplayText = { moodUi ->
-                        moodUi.title.asString(context = context)
+                        moodUi.title.asString()
                     },
                     onDismiss = {
                         onAction(RecordsAction.OnDismissFilterDropDown(filterType = RecordFilterChipType.MOOD))
                     },
                     onItemClick = { moodUi ->
-                        onAction(RecordsAction.OnFilterByItem(filterItem = FilterItem.MoodItem(moodUi = moodUi.item)))
+                        onAction(
+                            RecordsAction.OnFilterByItem(
+                                filterItem = FilterItem.MoodItem(
+                                    moodUi = moodUi.item
+                                )
+                            )
+                        )
                     },
                     dropDownOffset = dropDownOffset,
                     maxDropDownHeight = maxDropDownHeight,
@@ -174,5 +182,15 @@ fun RecordFilterRow(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun formatText(titles: List<UiText>): String = buildString {
+    when (titles.size) {
+        0 -> Unit
+        1 -> append(titles[0].asString())
+        2 -> append("${titles[0].asString()}, ${titles[1].asString()}")
+        else -> append("${titles[0].asString()}, ${titles[1].asString()} +${titles.size - 2}")
     }
 }

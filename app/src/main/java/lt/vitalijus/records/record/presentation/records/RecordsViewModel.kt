@@ -578,31 +578,10 @@ class RecordsViewModel(
 
         val moodIcons = this.map { it.iconSet.fill }
         val moodNames = this.map { it.title }
-        return when (size) {
-            1 -> MoodChipItemContent(
-                iconsRes = moodIcons,
-                title = moodNames.first()
-            )
-
-            2 -> MoodChipItemContent(
-                iconsRes = moodIcons,
-                title = UiText.Combined(
-                    format = "%s, %s",
-                    uiTexts = moodNames
-                )
-            )
-
-            else -> {
-                val extraElementCount = size - 2
-                MoodChipItemContent(
-                    iconsRes = moodIcons,
-                    title = UiText.Combined(
-                        format = "%s, %s +$extraElementCount",
-                        uiTexts = moodNames.take(2)
-                    )
-                )
-            }
-        }
+        return MoodChipItemContent(
+            iconsRes = moodIcons,
+            titles = moodNames
+        )
     }
 
     private fun Flow<List<Record>>.filterByMoodAndTopics(): Flow<List<Record>> {

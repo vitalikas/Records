@@ -1,60 +1,29 @@
 package lt.vitalijus.records.core.presentation.util
 
-import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.res.stringResource
+import lt.vitalijus.records.core.presentation.util.UiText.Dynamic
+import lt.vitalijus.records.core.presentation.util.UiText.StringResource
 
 @Stable
 sealed interface UiText {
 
-    data class Dynamic(val value: String) : UiText
+    @Stable
+    data class Dynamic(
+        val value: String
+    ) : UiText
 
     @Stable
     data class StringResource(
         @StringRes val id: Int,
         val args: List<Any> = emptyList()
     ) : UiText
+}
 
-    @Stable
-    data class Combined(
-        val format: String,
-        val uiTexts: List<UiText>
-    ) : UiText
-
-    @Composable
-    fun asString(): String {
-        return when (this) {
-            is Dynamic -> value
-            is StringResource -> stringResource(id, *args.toTypedArray())
-            is Combined -> {
-                val strings = uiTexts.map { uiText ->
-                    when (uiText) {
-                        is Combined -> throw IllegalArgumentException("Can't nest combined UiTexts.")
-                        is Dynamic -> uiText.value
-                        is StringResource -> stringResource(uiText.id, uiText.args)
-                    }
-                }
-                String.format(format, *strings.toTypedArray())
-            }
-        }
-    }
-
-    fun asString(context: Context): String {
-        return when (this) {
-            is Dynamic -> value
-            is StringResource -> context.getString(id, args)
-            is Combined -> {
-                val strings = uiTexts.map { uiText ->
-                    when (uiText) {
-                        is Combined -> throw IllegalArgumentException("Can't nest combined UiTexts.")
-                        is Dynamic -> uiText.value
-                        is StringResource -> context.getString(uiText.id, uiText.args)
-                    }
-                }
-                String.format(format, *strings.toTypedArray())
-            }
-        }
-    }
+@Composable
+fun UiText.asString(): String = when (this) {
+    is Dynamic -> value
+    is StringResource -> stringResource(id, *args.toTypedArray())
 }
